@@ -1,14 +1,14 @@
-import { GAME_CONFIG } from './config.js';
-import { questionManager } from './data/questions.js';
-import { AudioSystem } from './core/AudioSystem.js';
-import { GameLoop } from './core/GameLoop.js';
-import { RoomManager } from './systems/RoomManager.js';
-import { AISystem } from './systems/AISystem.js';
-import { Player } from './entities/Player.js';
-import { Board } from './entities/Board.js';
-import { HUD } from './ui/HUD.js';
-import { QuizModal } from './ui/QuizModal.js';
-import { Menu } from './ui/Menu.js';
+import { GAME_CONFIG } from './config.js?v=2.2';
+import { questionManager } from './data/questions.js?v=2.2';
+import { AudioSystem } from './core/AudioSystem.js?v=2.2';
+import { GameLoop } from './core/GameLoop.js?v=2.2';
+import { RoomManager } from './systems/RoomManager.js?v=2.2';
+import { AISystem } from './systems/AISystem.js?v=2.2';
+import { Player } from './entities/Player.js?v=2.2';
+import { Board } from './entities/Board.js?v=2.2';
+import { HUD } from './ui/HUD.js?v=2.2';
+import { QuizModal } from './ui/QuizModal.js?v=2.2';
+import { Menu } from './ui/Menu.js?v=2.2';
 
 /**
  * 貓狗大戰：常識地盤爭奪戰 - 主控制器 (Main Application Controller)
