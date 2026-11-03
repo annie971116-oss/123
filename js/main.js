@@ -1,5 +1,5 @@
 import { GAME_CONFIG } from './config.js';
-import { getQuestionByDifficulty } from './data/questions.js';
+import { questionManager } from './data/questions.js';
 import { AudioSystem } from './core/AudioSystem.js';
 import { GameLoop } from './core/GameLoop.js';
 import { RoomManager } from './systems/RoomManager.js';
@@ -27,9 +27,9 @@ class GameApp {
     this.player2 = null;
     this.currentTurnFaction = 'cat';
     this.gameMode = 'ai'; // 'ai' | 'room'
+    this.aiDifficulty = 'normal'; // 'easy' | 'normal' | 'hard'
 
     this.aiSystem = null;
-    this.usedQuestionIds = new Set();
     this.isAnsweringQuiz = false;
     this.isGameOver = false;
 
@@ -56,11 +56,14 @@ class GameApp {
   /**
    * 啟動新戰局
    */
-  startGame({ mode, avatar, roomCode }) {
+  startGame({ mode, aiDifficulty = 'normal', avatar, roomCode }) {
     this.gameMode = mode;
+    this.aiDifficulty = aiDifficulty;
     this.isGameOver = false;
     this.isAnsweringQuiz = false;
-    this.usedQuestionIds.clear();
+
+    // 重置單局題目記錄 (跨局歷史記憶自動保留)
+    questionManager.resetSession();
 
     // 建立雙方陣營玩家
     const p1Faction = avatar; // 'cat' 或 'dog'
@@ -81,11 +84,16 @@ class GameApp {
     // 啟動 5 分鐘 (300 秒) 計時器
     this.gameLoop.start(GAME_CONFIG.MATCH_DURATION_SECONDS);
 
-    // 若為電腦模式，啟動 AI 對手決策
+    // 若為電腦模式，依指定難度強度啟動 AI 對手決策
     if (this.gameMode === 'ai') {
-      this.aiSystem = new AISystem(this.board, this.player2, (targetTile, isCorrect) => {
-        this.handleAIMove(targetTile, isCorrect);
-      });
+      this.aiSystem = new AISystem(
+        this.board,
+        this.player2,
+        (targetTile, isCorrect) => {
+          this.handleAIMove(targetTile, isCorrect);
+        },
+        this.aiDifficulty
+      );
       this.aiSystem.start();
     } else {
       if (this.aiSystem) {
@@ -114,9 +122,8 @@ class GameApp {
     this.isAnsweringQuiz = true;
     if (this.aiSystem) this.aiSystem.pause();
 
-    // 根據地盤難度抽籤常識題目
-    const question = getQuestionByDifficulty(tile.difficulty, this.usedQuestionIds);
-    this.usedQuestionIds.add(question.id);
+    // 透過 QuestionManager 抽取同難度且保證本局與跨局不重複之常識題！
+    const question = questionManager.getUniqueQuestion(tile.difficulty);
 
     // 開啟常識四選一彈窗作答
     const result = await this.quizModal.askQuestion(question, tile, actingPlayer.factionId);

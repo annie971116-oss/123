@@ -57,17 +57,52 @@ export const GAME_CONFIG = {
     { score: 100, colSpan: 3, rowSpan: 3, difficulty: 5 },
   ],
 
-  // 電腦 AI 設定
-  AI_CONFIG: {
-    thinkTimeMin: 4000, // AI 思考間隔 4~8 秒
-    thinkTimeMax: 7500,
-    // 依題目難度的答對機率
-    accuracyByDiff: {
-      1: 0.88,
-      2: 0.78,
-      3: 0.68,
-      4: 0.58,
-      5: 0.48,
+  // 電腦強度三段配置
+  AI_DIFFICULTIES: {
+    easy: {
+      id: 'easy',
+      name: '🟢 呆萌幼幼 (簡單)',
+      desc: '思考悠閒，失誤率較高，適合放鬆遊玩體驗',
+      thinkTimeMin: 7000,
+      thinkTimeMax: 11000,
+      accuracyByDiff: {
+        1: 0.60,
+        2: 0.45,
+        3: 0.35,
+        4: 0.25,
+        5: 0.18,
+      },
+      aggressiveScoreBias: 0,
+    },
+    normal: {
+      id: 'normal',
+      name: '🟡 活潑寵物 (普通)',
+      desc: '攻防節奏均衡，標準智慧型可愛對抗',
+      thinkTimeMin: 4500,
+      thinkTimeMax: 7500,
+      accuracyByDiff: {
+        1: 0.85,
+        2: 0.75,
+        3: 0.65,
+        4: 0.55,
+        5: 0.45,
+      },
+      aggressiveScoreBias: 15,
+    },
+    hard: {
+      id: 'hard',
+      name: '🔴 戰神霸王 (困難)',
+      desc: '極速決策、答題神準，專挑高分大塊地盤進攻！',
+      thinkTimeMin: 2200,
+      thinkTimeMax: 4200,
+      accuracyByDiff: {
+        1: 0.98,
+        2: 0.92,
+        3: 0.85,
+        4: 0.78,
+        5: 0.70,
+      },
+      aggressiveScoreBias: 35,
     },
   },
 };

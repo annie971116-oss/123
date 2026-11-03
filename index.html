@@ -36,9 +36,9 @@
             <div class="mode-icon">🤖</div>
             <div class="mode-info">
               <h3>電腦對抗模式</h3>
-              <p>單人挑戰智慧型可愛電腦，搶奪最多地盤！</p>
+              <p>單人挑戰可愛電腦，自由切換強度！</p>
             </div>
-            <span class="mode-badge">熱門推薦</span>
+            <span class="mode-badge">人氣首選</span>
           </button>
 
           <button id="btn-mode-room" class="mode-card card-room">
@@ -52,16 +52,51 @@
         </div>
       </div>
 
+      <!-- 步驟 1-A: 電腦強度選擇 (單人模式專屬) -->
+      <div id="menu-step-ai-diff" class="menu-step hidden">
+        <h2 class="step-heading">【步驟 2】請選擇電腦對手難度強度</h2>
+        <div class="ai-diff-grid">
+          <div id="btn-ai-easy" class="ai-diff-card card-diff-easy" data-diff="easy">
+            <div class="diff-icon">🌱</div>
+            <div class="diff-title">🟢 呆萌幼幼 (簡單)</div>
+            <div class="diff-desc">思考悠閒 (7~11秒)，常有小失誤，適合新手或休閒放鬆遊玩</div>
+            <div class="diff-check">✔ 已選取</div>
+          </div>
+
+          <div id="btn-ai-normal" class="ai-diff-card card-diff-normal selected" data-diff="normal">
+            <div class="diff-icon">🐾</div>
+            <div class="diff-title">🟡 活潑寵物 (普通)</div>
+            <div class="diff-desc">攻防節奏適中 (4.5~7.5秒)，標準智慧對抗，推薦一般挑戰</div>
+            <div class="diff-check">✔ 已選取</div>
+          </div>
+
+          <div id="btn-ai-hard" class="ai-diff-card card-diff-hard" data-diff="hard">
+            <div class="diff-icon">🔥</div>
+            <div class="diff-title">🔴 戰神霸王 (困難)</div>
+            <div class="diff-desc">極速出招 (2~4秒)，答題神準！專門搶奪 70~100 分大塊地盤！</div>
+            <div class="diff-check">✔ 已選取</div>
+          </div>
+        </div>
+
+        <div class="step-actions">
+          <button id="btn-ai-diff-back" class="btn-action btn-copy">⬅ 返回重選模式</button>
+          <button id="btn-ai-diff-next" class="btn-action btn-primary">下一步：選擇形象 ➔</button>
+        </div>
+      </div>
+
       <!-- 步驟 1-B: 雙人房間代碼配置 -->
       <div id="menu-step-room" class="menu-step hidden">
         <h2 class="step-heading">【雙人對抗】房間代碼設定</h2>
         <div class="room-action-wrap">
           <div id="room-created-box" class="room-box">
-            <div class="room-label">您的房間邀請代碼：</div>
+            <div class="room-label">您的專屬房間邀請代碼：</div>
             <div id="room-code-display" class="room-code-badge">----</div>
             <button id="btn-copy-code" class="btn-action btn-copy">📋 複製邀請代碼</button>
             <p class="room-hint">傳送代碼給好友，即可在同一房間或同機輪流對戰！</p>
-            <button id="btn-room-next" class="btn-action btn-primary">下一步：選擇形象 ➔</button>
+            <div class="step-actions">
+              <button id="btn-room-back" class="btn-action btn-copy">⬅ 返回重選模式</button>
+              <button id="btn-room-next" class="btn-action btn-primary">下一步：選擇形象 ➔</button>
+            </div>
           </div>
 
           <div class="room-divider">或輸入好友代碼</div>
@@ -73,9 +108,9 @@
         </div>
       </div>
 
-      <!-- 步驟 2: 選擇形象 (貓或狗) -->
+      <!-- 步驟 3: 選擇形象 (貓或狗) -->
       <div id="menu-step-avatar" class="menu-step hidden">
-        <h2 class="step-heading">【步驟 2】請選擇您的代表形象</h2>
+        <h2 class="step-heading">【步驟 3】請選擇您的代表形象</h2>
         <div class="avatar-select-grid">
           <div id="btn-choose-cat" class="avatar-card card-cat selected">
             <div class="avatar-emoji">🐱</div>

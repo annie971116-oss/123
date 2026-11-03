@@ -1,6 +1,6 @@
 /**
  * 主畫面與選單控制器 (Menu UI)
- * 負責模式選擇 (電腦模式 / 雙人房間代碼)、形象選擇 (貓或狗)、音量控制與遊戲結算畫面
+ * 負責模式選擇、電腦強度三段選擇 (簡單/普通/困難)、形象選擇 (貓或狗)、音量控制與遊戲結算畫面
  */
 export class Menu {
   constructor({ audioSystem, roomManager, onStartGame }) {
@@ -8,13 +8,14 @@ export class Menu {
     this.roomManager = roomManager;
     this.onStartGame = onStartGame || (() => {});
 
-    // 主選單面板
+    // 主選單與畫面
     this.menuScreen = document.getElementById('main-menu');
     this.gameScreen = document.getElementById('game-screen');
     this.gameOverModal = document.getElementById('gameover-modal');
 
     // 步驟區塊
     this.stepMode = document.getElementById('menu-step-mode');
+    this.stepAIDiff = document.getElementById('menu-step-ai-diff');
     this.stepRoom = document.getElementById('menu-step-room');
     this.stepAvatar = document.getElementById('menu-step-avatar');
 
@@ -24,6 +25,7 @@ export class Menu {
 
     // 當前選擇設定
     this.selectedMode = 'ai'; // 'ai' | 'room'
+    this.selectedAIDifficulty = 'normal'; // 'easy' | 'normal' | 'hard'
     this.selectedAvatar = 'cat'; // 'cat' | 'dog'
     this.roomCode = '';
 
@@ -56,7 +58,7 @@ export class Menu {
       btnModeAI.addEventListener('click', () => {
         this.audio.playClick();
         this.selectedMode = 'ai';
-        this.goToStep('avatar');
+        this.goToStep('ai-diff');
       });
     }
 
@@ -69,10 +71,39 @@ export class Menu {
       });
     }
 
-    // 4. 房間步驟按鈕
+    // 4. 電腦強度三段選擇按鈕
+    const diffCards = document.querySelectorAll('.ai-diff-card');
+    diffCards.forEach((card) => {
+      card.addEventListener('click', () => {
+        this.audio.playClick();
+        diffCards.forEach((c) => c.classList.remove('selected'));
+        card.classList.add('selected');
+        this.selectedAIDifficulty = card.dataset.diff || 'normal';
+      });
+    });
+
+    const btnAIDiffBack = document.getElementById('btn-ai-diff-back');
+    const btnAIDiffNext = document.getElementById('btn-ai-diff-next');
+
+    if (btnAIDiffBack) {
+      btnAIDiffBack.addEventListener('click', () => {
+        this.audio.playClick();
+        this.goToStep('mode');
+      });
+    }
+
+    if (btnAIDiffNext) {
+      btnAIDiffNext.addEventListener('click', () => {
+        this.audio.playClick();
+        this.goToStep('avatar');
+      });
+    }
+
+    // 5. 雙人房間步驟按鈕
     const btnCreateRoom = document.getElementById('btn-create-room');
     const btnCopyCode = document.getElementById('btn-copy-code');
     const btnJoinRoom = document.getElementById('btn-join-room');
+    const btnRoomBack = document.getElementById('btn-room-back');
     const btnRoomNext = document.getElementById('btn-room-next');
     const inputJoinCode = document.getElementById('input-join-code');
     const roomCodeDisplay = document.getElementById('room-code-display');
@@ -110,6 +141,13 @@ export class Menu {
       });
     }
 
+    if (btnRoomBack) {
+      btnRoomBack.addEventListener('click', () => {
+        this.audio.playClick();
+        this.goToStep('mode');
+      });
+    }
+
     if (btnRoomNext) {
       btnRoomNext.addEventListener('click', () => {
         this.audio.playClick();
@@ -117,7 +155,7 @@ export class Menu {
       });
     }
 
-    // 5. 形象選擇按鈕 (貓或狗)
+    // 6. 形象選擇按鈕 (貓或狗)
     const btnChooseCat = document.getElementById('btn-choose-cat');
     const btnChooseDog = document.getElementById('btn-choose-dog');
     const btnStartGame = document.getElementById('btn-start-game');
@@ -147,13 +185,14 @@ export class Menu {
         this.hideMenu();
         this.onStartGame({
           mode: this.selectedMode,
+          aiDifficulty: this.selectedAIDifficulty,
           avatar: this.selectedAvatar,
           roomCode: this.roomCode,
         });
       });
     }
 
-    // 6. 重新開始按鈕
+    // 7. 重新開始按鈕
     const btnRestartGame = document.getElementById('btn-restart-game');
     if (btnRestartGame) {
       btnRestartGame.addEventListener('click', () => {
@@ -173,10 +212,12 @@ export class Menu {
 
   goToStep(stepName) {
     this.stepMode?.classList.add('hidden');
+    this.stepAIDiff?.classList.add('hidden');
     this.stepRoom?.classList.add('hidden');
     this.stepAvatar?.classList.add('hidden');
 
     if (stepName === 'mode') this.stepMode?.classList.remove('hidden');
+    if (stepName === 'ai-diff') this.stepAIDiff?.classList.remove('hidden');
     if (stepName === 'room') this.stepRoom?.classList.remove('hidden');
     if (stepName === 'avatar') this.stepAvatar?.classList.remove('hidden');
   }

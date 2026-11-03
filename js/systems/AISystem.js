@@ -2,15 +2,22 @@ import { GAME_CONFIG } from '../config.js';
 
 /**
  * 電腦 AI 決策系統 (AI System)
- * 在單人電腦模式中，模擬對手思考並定期向周邊地盤發動攻防
+ * 支援三段強度：🟢 呆萌幼幼 (簡單) / 🟡 活潑寵物 (普通) / 🔴 戰神霸王 (困難)
  */
 export class AISystem {
-  constructor(board, aiPlayer, onAIMove) {
+  constructor(board, aiPlayer, onAIMove, aiDifficultyKey = 'normal') {
     this.board = board;
     this.aiPlayer = aiPlayer;
     this.onAIMove = onAIMove || (() => {});
     this.timer = null;
     this.isActive = false;
+
+    this.setDifficulty(aiDifficultyKey);
+  }
+
+  setDifficulty(diffKey) {
+    this.difficultyKey = diffKey;
+    this.diffConfig = GAME_CONFIG.AI_DIFFICULTIES[diffKey] || GAME_CONFIG.AI_DIFFICULTIES.normal;
   }
 
   start() {
@@ -39,9 +46,10 @@ export class AISystem {
   scheduleNextAction() {
     if (!this.isActive) return;
 
+    // 依據難度設定計算思考時間 (簡單: 7~11s, 普通: 4.5~7.5s, 困難: 2.2~4.2s)
     const delay =
-      GAME_CONFIG.AI_CONFIG.thinkTimeMin +
-      Math.random() * (GAME_CONFIG.AI_CONFIG.thinkTimeMax - GAME_CONFIG.AI_CONFIG.thinkTimeMin);
+      this.diffConfig.thinkTimeMin +
+      Math.random() * (this.diffConfig.thinkTimeMax - this.diffConfig.thinkTimeMin);
 
     this.timer = setTimeout(() => {
       this.executeAction();
@@ -59,22 +67,35 @@ export class AISystem {
       return;
     }
 
-    // 智能評估策略：優先進攻分數較高或對手已佔領的地盤
+    // 智慧加權評估：
+    // - 基礎分 = 地盤分數
+    // - 侵略加權 = 若該地盤已被玩家佔領，增加掠奪意願 (困難模式激進搶奪)
     selectable.sort((a, b) => {
       let weightA = a.score;
       let weightB = b.score;
-      // 若對方已佔領，增加掠奪意願
-      if (a.owner && !a.isBase) weightA += 15;
-      if (b.owner && !b.isBase) weightB += 15;
+
+      if (a.owner && !a.isBase) weightA += this.diffConfig.aggressiveScoreBias;
+      if (b.owner && !b.isBase) weightB += this.diffConfig.aggressiveScoreBias;
+
       return weightB - weightA;
     });
 
-    // 從前三名高權重地盤中挑選其一 (具備適度隨機感)
-    const topCandidates = selectable.slice(0, Math.min(3, selectable.length));
-    const targetTile = topCandidates[Math.floor(Math.random() * topCandidates.length)];
+    let targetTile = null;
+    if (this.difficultyKey === 'easy') {
+      // 簡單模式：較隨機，偶爾挑低分格
+      targetTile = selectable[Math.floor(Math.random() * selectable.length)];
+    } else if (this.difficultyKey === 'hard') {
+      // 困難模式：精準鎖定最高權重的第一名或第二名
+      const topCount = Math.min(2, selectable.length);
+      targetTile = selectable[Math.floor(Math.random() * topCount)];
+    } else {
+      // 普通模式：從前三名優質地盤中挑選
+      const topCount = Math.min(3, selectable.length);
+      targetTile = selectable[Math.floor(Math.random() * topCount)];
+    }
 
-    // 計算 AI 答對機率 (根據題目難度)
-    const accuracy = GAME_CONFIG.AI_CONFIG.accuracyByDiff[targetTile.difficulty] || 0.65;
+    // 計算 AI 答對機率 (依據強度與題目難度對照表)
+    const accuracy = this.diffConfig.accuracyByDiff[targetTile.difficulty] || 0.65;
     const isCorrect = Math.random() < accuracy;
 
     // 回呼通知主控台處理 AI 戰果
