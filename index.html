@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <title>🐱 貓狗大戰：常識地盤爭奪戰 🐶</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Fredoka:wght@500;600;700&family=Nunito:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- ================= 主選單畫面 ================= -->
+  <div id="main-menu" class="screen-container">
+    <div class="menu-card">
+      <div class="menu-header">
+        <div class="audio-control-bar">
+          <label for="volume-slider" class="volume-label">🔊 音量</label>
+          <input type="range" id="volume-slider" min="0" max="1" step="0.05" value="0.7">
+          <button id="mute-btn" class="btn-sound-toggle">🔊 音效開</button>
+        </div>
+        <div class="game-logo">
+          <span class="logo-pet bounce-slow">🐱</span>
+          <span class="logo-vs">VS</span>
+          <span class="logo-pet bounce-slow-rev">🐶</span>
+        </div>
+        <h1 class="game-title">貓狗大戰</h1>
+        <p class="game-subtitle">🐾 常識地盤爭奪戰・5分鐘限時益智對決 🐾</p>
+      </div>
+
+      <!-- 步驟 1: 模式選擇 -->
+      <div id="menu-step-mode" class="menu-step">
+        <h2 class="step-heading">【步驟 1】請選擇對戰模式</h2>
+        <div class="mode-cards-grid">
+          <button id="btn-mode-ai" class="mode-card card-ai">
+            <div class="mode-icon">🤖</div>
+            <div class="mode-info">
+              <h3>電腦對抗模式</h3>
+              <p>單人挑戰智慧型可愛電腦，搶奪最多地盤！</p>
+            </div>
+            <span class="mode-badge">熱門推薦</span>
+          </button>
+
+          <button id="btn-mode-room" class="mode-card card-room">
+            <div class="mode-icon">👥</div>
+            <div class="mode-info">
+              <h3>雙人房間模式</h3>
+              <p>創建 4 碼邀請代碼（例如 CAT8），邀請好友對戰！</p>
+            </div>
+            <span class="mode-badge">雙人對抗</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- 步驟 1-B: 雙人房間代碼配置 -->
+      <div id="menu-step-room" class="menu-step hidden">
+        <h2 class="step-heading">【雙人對抗】房間代碼設定</h2>
+        <div class="room-action-wrap">
+          <div id="room-created-box" class="room-box">
+            <div class="room-label">您的房間邀請代碼：</div>
+            <div id="room-code-display" class="room-code-badge">----</div>
+            <button id="btn-copy-code" class="btn-action btn-copy">📋 複製邀請代碼</button>
+            <p class="room-hint">傳送代碼給好友，即可在同一房間或同機輪流對戰！</p>
+            <button id="btn-room-next" class="btn-action btn-primary">下一步：選擇形象 ➔</button>
+          </div>
+
+          <div class="room-divider">或輸入好友代碼</div>
+
+          <div class="join-box">
+            <input type="text" id="input-join-code" placeholder="輸入 4 碼房間代碼 (如 CAT7)" maxlength="6">
+            <button id="btn-join-room" class="btn-action btn-secondary">輸入代碼並加入</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 步驟 2: 選擇形象 (貓或狗) -->
+      <div id="menu-step-avatar" class="menu-step hidden">
+        <h2 class="step-heading">【步驟 2】請選擇您的代表形象</h2>
+        <div class="avatar-select-grid">
+          <div id="btn-choose-cat" class="avatar-card card-cat selected">
+            <div class="avatar-emoji">🐱</div>
+            <div class="avatar-name">貓咪軍團</div>
+            <div class="avatar-slogan">喵喵戰隊・粉嫩可愛・守護罐罐</div>
+            <div class="check-mark">✔ 已選擇</div>
+          </div>
+
+          <div id="btn-choose-dog" class="avatar-card card-dog">
+            <div class="avatar-emoji">🐶</div>
+            <div class="avatar-name">狗狗軍團</div>
+            <div class="avatar-slogan">汪汪戰隊・忠誠活潑・捍衛肉骨</div>
+            <div class="check-mark">✔ 已選擇</div>
+          </div>
+        </div>
+
+        <button id="btn-start-game" class="btn-action btn-start pulse">🚀 正式進入戰局（開始5分鐘對決）</button>
+      </div>
+
+      <div class="menu-rules-summary">
+        <strong>📖 遊戲快速規則：</strong>
+        <span>1. 雙方自基地出發向四面八方擴張</span>・
+        <span>2. 點擊相鄰地盤回答常識題 (四選一)</span>・
+        <span>3. 答對佔領並獲取分數，答錯倒扣且該格進入冷卻</span>・
+        <span>4. 分數越高地盤越大題目越難</span>・
+        <span>5. 5分鐘後總分高者勝出！</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= 遊戲核心對戰畫面 ================= -->
+  <div id="game-screen" class="screen-container hidden">
+    <!-- 頂部 HUD 資訊列 -->
+    <header class="game-hud">
+      <!-- 左上角：玩家 1 -->
+      <div class="player-hud-card p1-card">
+        <div class="hud-avatar" id="p1-avatar">🐱</div>
+        <div class="hud-details">
+          <div class="hud-name" id="p1-name">貓咪軍團</div>
+          <div class="hud-stats">
+            <span class="hud-pill pill-score">⭐ <span id="p1-score">0 分</span></span>
+            <span class="hud-pill pill-territory">🚩 <span id="p1-territory">0 塊</span></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 中間上方：5 分鐘計時器與行動標籤 -->
+      <div class="center-hud">
+        <div class="timer-box">
+          <span class="timer-icon">⏱</span>
+          <span id="hud-timer" class="timer-value">05:00</span>
+        </div>
+        <div id="hud-turn-badge" class="turn-pill pill-active">
+          🎯 點擊相鄰方格搶攻地盤！
+        </div>
+      </div>
+
+      <!-- 右上角：玩家 2 (對手 / AI) -->
+      <div class="player-hud-card p2-card">
+        <div class="hud-details text-right">
+          <div class="hud-name" id="p2-name">狗狗軍團</div>
+          <div class="hud-stats justify-end">
+            <span class="hud-pill pill-score">⭐ <span id="p2-score">0 分</span></span>
+            <span class="hud-pill pill-territory">🚩 <span id="p2-territory">0 塊</span></span>
+          </div>
+        </div>
+        <div class="hud-avatar" id="p2-avatar">🐶</div>
+      </div>
+    </header>
+
+    <!-- 異構尺寸地盤棋盤 -->
+    <main class="board-container">
+      <div id="game-board" class="board-grid"></div>
+    </main>
+
+    <!-- 底部操作提示 -->
+    <footer class="game-footer">
+      <p class="footer-tip">🐾 <strong>玩法指引：</strong>綠色微光外框代表當前可進攻的相鄰地盤。答對得地得點，答錯倒扣分數！分數越高的格子面積越大！</p>
+    </footer>
+  </div>
+
+  <!-- ================= 常識問答彈窗 (Quiz Modal) ================= -->
+  <div id="quiz-modal" class="modal-overlay hidden">
+    <div class="quiz-card pop-in">
+      <div class="quiz-header">
+        <div id="quiz-title" class="quiz-title">🐾 爭奪地盤中...</div>
+        <div class="quiz-timer-wrap">
+          <div id="quiz-timer-bar" class="quiz-timer-bar"></div>
+        </div>
+      </div>
+
+      <div class="quiz-body">
+        <h2 id="quiz-question" class="quiz-question-text">載入常識題目中...</h2>
+        <div id="quiz-options" class="quiz-options-list"></div>
+      </div>
+
+      <div id="quiz-feedback" class="quiz-feedback hidden"></div>
+    </div>
+  </div>
+
+  <!-- ================= 遊戲結算畫面 (Game Over Modal) ================= -->
+  <div id="gameover-modal" class="modal-overlay hidden">
+    <div class="gameover-card pop-in">
+      <div id="result-winner-icon" class="winner-trophy">👑</div>
+      <h1 id="result-winner-title" class="winner-title">大獲全勝！</h1>
+      <p id="result-reason" class="winner-reason">5 分鐘對決結束結算中...</p>
+
+      <div id="result-stats-detail" class="result-stats-row"></div>
+
+      <button id="btn-restart-game" class="btn-action btn-restart pulse">🔄 再來一局新對決！</button>
+    </div>
+  </div>
+
+  <!-- 應用程式模組進入點 -->
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>

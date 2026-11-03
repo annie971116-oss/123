@@ -1,0 +1,976 @@
+:root {
+  --bg-main: #FFF7FB;
+  --card-bg: #FFFFFF;
+  --cat-color: #FF6B8B;
+  --cat-light: #FFF0F4;
+  --cat-border: #FF4D79;
+  --cat-shadow: rgba(255, 107, 139, 0.35);
+
+  --dog-color: #3A96FF;
+  --dog-light: #F0F6FF;
+  --dog-border: #217BDE;
+  --dog-shadow: rgba(58, 150, 255, 0.35);
+
+  --neutral-tile: #FFFDF9;
+  --neutral-border: #E8DFD8;
+  --text-dark: #4A3B4E;
+  --text-muted: #8E7A91;
+  --accent-gold: #FFB830;
+  --success-green: #2ECC71;
+  --danger-red: #E74C3C;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Nunito', 'Fredoka', sans-serif;
+  color: var(--text-dark);
+  background:
+    radial-gradient(circle at 10% 15%, #FFEAF2 0%, transparent 40%),
+    radial-gradient(circle at 90% 85%, #EBF4FF 0%, transparent 40%),
+    var(--bg-main);
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  padding: 12px;
+  overflow-x: hidden;
+}
+
+/* ================= 畫面容器 ================= */
+.screen-container {
+  width: 100%;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.hidden {
+  display: none !important;
+}
+
+/* ================= 主選單樣式 ================= */
+.menu-card {
+  background: var(--card-bg);
+  border-radius: 36px;
+  padding: 32px 28px 24px;
+  box-shadow: 0 24px 60px -15px rgba(255, 107, 139, 0.2), 0 2px 0 rgba(255, 255, 255, 0.8) inset;
+  text-align: center;
+  position: relative;
+  border: 3px solid #FFE4ED;
+}
+
+.menu-header {
+  position: relative;
+  margin-bottom: 24px;
+}
+
+.audio-control-bar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-bottom: 12px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+
+.audio-control-bar input[type="range"] {
+  width: 90px;
+  accent-color: var(--cat-color);
+  cursor: pointer;
+}
+
+.btn-sound-toggle {
+  background: #FFF3F7;
+  border: 1.5px solid #FFD4E2;
+  border-radius: 12px;
+  padding: 4px 10px;
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--cat-color);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-sound-toggle:hover {
+  transform: scale(1.05);
+}
+
+.btn-sound-toggle.btn-muted {
+  background: #F1F1F5;
+  border-color: #D8D8E0;
+  color: #888899;
+}
+
+.game-logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin-bottom: 6px;
+}
+
+.logo-pet {
+  font-size: 54px;
+  display: inline-block;
+}
+
+.logo-vs {
+  font-family: 'Baloo 2', sans-serif;
+  font-weight: 800;
+  font-size: 28px;
+  color: #FFAE33;
+  text-shadow: 0 2px 0 #E88800;
+}
+
+.game-title {
+  font-family: 'Baloo 2', sans-serif;
+  font-size: 38px;
+  font-weight: 800;
+  background: linear-gradient(135deg, var(--cat-color) 0%, #FF9054 50%, var(--dog-color) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin-bottom: 6px;
+  letter-spacing: 1px;
+}
+
+.game-subtitle {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+
+.step-heading {
+  font-family: 'Baloo 2', sans-serif;
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--text-dark);
+  margin-bottom: 18px;
+}
+
+/* 模式選擇卡片 */
+.mode-cards-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+  margin-bottom: 20px;
+}
+
+.mode-card {
+  background: #FFFBFD;
+  border: 3px solid #FFE4EE;
+  border-radius: 24px;
+  padding: 24px 18px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.18s ease;
+  box-shadow: 0 8px 18px -6px rgba(255, 107, 139, 0.12);
+}
+
+.mode-card:hover {
+  transform: translateY(-4px);
+  border-color: var(--cat-color);
+  box-shadow: 0 14px 26px -8px rgba(255, 107, 139, 0.25);
+}
+
+.card-room:hover {
+  border-color: var(--dog-color);
+  box-shadow: 0 14px 26px -8px rgba(58, 150, 255, 0.25);
+}
+
+.mode-icon {
+  font-size: 46px;
+  margin-bottom: 10px;
+}
+
+.mode-info h3 {
+  font-family: 'Baloo 2', sans-serif;
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--text-dark);
+  margin-bottom: 6px;
+}
+
+.mode-info p {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+.mode-badge {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: linear-gradient(135deg, #FFB830, #FF8E00);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 800;
+  padding: 3px 8px;
+  border-radius: 10px;
+}
+
+/* 房間配置區 */
+.room-action-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.room-box {
+  background: #F6FAFF;
+  border: 2px dashed var(--dog-border);
+  border-radius: 20px;
+  padding: 20px;
+  width: 100%;
+  max-width: 480px;
+}
+
+.room-code-badge {
+  font-family: 'Baloo 2', sans-serif;
+  font-size: 36px;
+  font-weight: 800;
+  color: var(--dog-color);
+  letter-spacing: 6px;
+  margin: 10px 0;
+}
+
+.room-hint {
+  font-size: 12.5px;
+  color: var(--text-muted);
+  margin: 10px 0 14px;
+}
+
+.room-divider {
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--text-muted);
+  position: relative;
+}
+
+.join-box {
+  display: flex;
+  gap: 10px;
+  width: 100%;
+  max-width: 480px;
+}
+
+.join-box input {
+  flex: 1;
+  padding: 12px 16px;
+  border-radius: 16px;
+  border: 2px solid #E2D9E2;
+  font-family: 'Baloo 2', sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  text-align: center;
+  outline: none;
+}
+
+.join-box input:focus {
+  border-color: var(--cat-color);
+}
+
+/* 形象選擇區 (貓或狗) */
+.avatar-select-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  margin-bottom: 24px;
+}
+
+.avatar-card {
+  border-radius: 26px;
+  padding: 24px 16px;
+  border: 3.5px solid transparent;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  position: relative;
+}
+
+.card-cat {
+  background: var(--cat-light);
+  border-color: #FFD4E2;
+}
+
+.card-cat:hover, .card-cat.selected {
+  border-color: var(--cat-color);
+  transform: translateY(-4px);
+  box-shadow: 0 12px 28px -6px var(--cat-shadow);
+}
+
+.card-dog {
+  background: var(--dog-light);
+  border-color: #DCEBFF;
+}
+
+.card-dog:hover, .card-dog.selected {
+  border-color: var(--dog-color);
+  transform: translateY(-4px);
+  box-shadow: 0 12px 28px -6px var(--dog-shadow);
+}
+
+.avatar-emoji {
+  font-size: 64px;
+  margin-bottom: 8px;
+}
+
+.avatar-name {
+  font-family: 'Baloo 2', sans-serif;
+  font-size: 22px;
+  font-weight: 800;
+  margin-bottom: 4px;
+}
+
+.card-cat .avatar-name { color: var(--cat-color); }
+.card-dog .avatar-name { color: var(--dog-color); }
+
+.avatar-slogan {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-muted);
+  margin-bottom: 12px;
+}
+
+.check-mark {
+  display: none;
+  background: #fff;
+  padding: 4px 14px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 800;
+  margin: 0 auto;
+  width: fit-content;
+}
+
+.card-cat .check-mark { color: var(--cat-color); }
+.card-dog .check-mark { color: var(--dog-color); }
+.avatar-card.selected .check-mark { display: block; }
+
+/* 按鈕共用樣式 */
+.btn-action {
+  font-family: 'Baloo 2', sans-serif;
+  font-weight: 800;
+  font-size: 16px;
+  padding: 12px 24px;
+  border-radius: 20px;
+  border: none;
+  cursor: pointer;
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+
+.btn-action:hover { transform: translateY(-2px); }
+.btn-action:active { transform: translateY(1px); }
+
+.btn-primary {
+  background: linear-gradient(135deg, var(--cat-color), #FF4D79);
+  color: #fff;
+  box-shadow: 0 6px 16px -4px var(--cat-shadow);
+}
+
+.btn-secondary {
+  background: linear-gradient(135deg, var(--dog-color), #217BDE);
+  color: #fff;
+  box-shadow: 0 6px 16px -4px var(--dog-shadow);
+}
+
+.btn-copy {
+  background: #FFF0F5;
+  color: var(--cat-color);
+  border: 2px solid #FFC8DA;
+}
+
+.btn-start {
+  background: linear-gradient(135deg, #FF6B8B, #FF9E44);
+  color: #fff;
+  font-size: 20px;
+  padding: 16px 36px;
+  box-shadow: 0 10px 24px -6px rgba(255, 107, 139, 0.45);
+}
+
+.menu-rules-summary {
+  background: #FFF9FA;
+  border: 1.5px solid #FFE4EE;
+  border-radius: 16px;
+  padding: 12px 16px;
+  font-size: 12px;
+  color: var(--text-muted);
+  line-height: 1.6;
+}
+
+/* ================= 遊戲核心對戰畫面 ================= */
+.game-hud {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--card-bg);
+  border-radius: 28px;
+  padding: 14px 20px;
+  margin-bottom: 14px;
+  box-shadow: 0 12px 32px -10px rgba(0, 0, 0, 0.08);
+  border: 2px solid #FFEBF1;
+}
+
+.player-hud-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+}
+
+.hud-avatar {
+  font-size: 40px;
+  background: #FFF5F8;
+  border-radius: 20px;
+  padding: 6px;
+  border: 2px solid #FFD4E2;
+}
+
+.p2-card .hud-avatar {
+  background: #F0F6FF;
+  border-color: #D2E4FF;
+}
+
+.hud-details {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.text-right { text-align: right; }
+.justify-end { justify-content: flex-end; }
+
+.hud-name {
+  font-family: 'Baloo 2', sans-serif;
+  font-weight: 800;
+  font-size: 17px;
+}
+
+.p1-card .hud-name { color: var(--cat-color); }
+.p2-card .hud-name { color: var(--dog-color); }
+
+.hud-stats {
+  display: flex;
+  gap: 8px;
+}
+
+.hud-pill {
+  font-size: 12.5px;
+  font-weight: 800;
+  padding: 3px 9px;
+  border-radius: 12px;
+  background: #FFF3F7;
+  color: var(--text-dark);
+}
+
+.pill-score { background: #FFF7E6; color: #D48806; }
+.pill-territory { background: #E6F7FF; color: #1890FF; }
+
+/* 中間計時器 */
+.center-hud {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.timer-box {
+  background: #FFF2F6;
+  border: 2.5px solid #FFB8CF;
+  border-radius: 20px;
+  padding: 6px 18px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  box-shadow: 0 4px 10px rgba(255, 107, 139, 0.15);
+}
+
+.timer-icon { font-size: 18px; }
+
+.timer-value {
+  font-family: 'Baloo 2', sans-serif;
+  font-size: 28px;
+  font-weight: 800;
+  color: var(--cat-border);
+  letter-spacing: 1px;
+}
+
+.timer-value.timer-urgent {
+  color: var(--danger-red);
+  animation: pulse-urgent 0.8s infinite;
+}
+
+@keyframes pulse-urgent {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+}
+
+.turn-pill {
+  font-size: 12px;
+  font-weight: 800;
+  padding: 3px 12px;
+  border-radius: 12px;
+  background: #FFF0F5;
+  color: var(--cat-color);
+  border: 1px solid #FFD4E2;
+}
+
+.turn-pill.pill-dog {
+  background: #F0F6FF;
+  color: var(--dog-color);
+  border-color: #D2E4FF;
+}
+
+/* ================= 異構尺寸棋盤網格 ================= */
+.board-container {
+  background: var(--card-bg);
+  border-radius: 32px;
+  padding: 16px;
+  box-shadow: 0 18px 45px -12px rgba(255, 107, 139, 0.2);
+  border: 3px solid #FFEBF1;
+  overflow-x: auto;
+}
+
+.board-grid {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(68px, 1fr));
+  grid-template-rows: repeat(8, 62px);
+  gap: 7px;
+  min-width: 860px;
+}
+
+.board-tile {
+  background: var(--neutral-tile);
+  border: 2px solid var(--neutral-border);
+  border-radius: 18px;
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  cursor: pointer;
+  position: relative;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+  overflow: hidden;
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.04);
+}
+
+.board-tile:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.08);
+}
+
+/* 面積等級階梯樣式 */
+.tile-tier-huge {
+  background: linear-gradient(135deg, #FFF9EA 0%, #FFF3D6 100%);
+  border: 3px solid #FFD272;
+}
+.tile-tier-huge .tile-score {
+  font-size: 22px;
+  color: #D47B00;
+}
+
+.tile-tier-large {
+  background: linear-gradient(135deg, #FFFDF6 0%, #FFF7E8 100%);
+  border: 2.5px solid #FFE1A8;
+}
+
+/* 基地守護區 */
+.tile-base {
+  cursor: default !important;
+  box-shadow: none !important;
+}
+
+.tile-base.base-cat {
+  background: linear-gradient(135deg, #FFE8F0 0%, #FFD6E5 100%);
+  border: 3px solid var(--cat-border);
+}
+
+.tile-base.base-dog {
+  background: linear-gradient(135deg, #E6F2FF 0%, #D1E7FF 100%);
+  border: 3px solid var(--dog-border);
+}
+
+.base-badge {
+  font-family: 'Baloo 2', sans-serif;
+  font-weight: 800;
+  font-size: 18px;
+  margin-bottom: 2px;
+}
+
+.base-cat .base-badge { color: var(--cat-color); }
+.base-dog .base-badge { color: var(--dog-color); }
+
+.base-sub {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+
+/* 陣營佔領樣式 */
+.board-tile.owned-cat {
+  background: linear-gradient(145deg, #FFF0F5 0%, #FFE3EC 100%);
+  border-color: var(--cat-border);
+  box-shadow: inset 0 0 0 2px rgba(255, 107, 139, 0.25), 0 4px 10px var(--cat-shadow);
+}
+.board-tile.owned-cat .tile-score { color: var(--cat-color); }
+
+.board-tile.owned-dog {
+  background: linear-gradient(145deg, #F0F7FF 0%, #E0EFFF 100%);
+  border-color: var(--dog-border);
+  box-shadow: inset 0 0 0 2px rgba(58, 150, 255, 0.25), 0 4px 10px var(--dog-shadow);
+}
+.board-tile.owned-dog .tile-score { color: var(--dog-color); }
+
+/* 可選進攻高亮引導 */
+.board-tile.tile-selectable {
+  border-color: var(--success-green) !important;
+  box-shadow: 0 0 0 3px rgba(46, 204, 113, 0.35), 0 6px 16px rgba(46, 204, 113, 0.25);
+  animation: pulse-selectable 1.5s infinite;
+}
+
+@keyframes pulse-selectable {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.02); }
+}
+
+/* 答錯冷卻中標記 */
+.board-tile.tile-cooldown {
+  opacity: 0.65;
+  filter: grayscale(0.5);
+  cursor: not-allowed !important;
+}
+
+.tile-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.tile-score {
+  font-family: 'Baloo 2', sans-serif;
+  font-size: 17px;
+  font-weight: 800;
+  color: #6C5468;
+}
+
+.tile-diff {
+  font-size: 11px;
+  letter-spacing: -2px;
+}
+
+.tile-body {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  flex: 1;
+}
+
+.owner-avatar {
+  font-family: 'Baloo 2', sans-serif;
+  font-weight: 800;
+  font-size: 13.5px;
+}
+
+.owned-cat .owner-avatar { color: var(--cat-color); }
+.owned-dog .owner-avatar { color: var(--dog-color); }
+
+.neutral-flag {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #A4909C;
+}
+
+.game-footer {
+  margin-top: 12px;
+  text-align: center;
+}
+
+.footer-tip {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+
+/* ================= 常識問答彈窗 (Quiz Modal) ================= */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(40, 25, 45, 0.65);
+  backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 16px;
+}
+
+.quiz-card {
+  background: #FFFFFF;
+  border-radius: 32px;
+  padding: 26px 24px 20px;
+  max-width: 580px;
+  width: 100%;
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.3);
+  border: 3px solid #FFEBF2;
+}
+
+.quiz-header {
+  margin-bottom: 16px;
+}
+
+.quiz-title {
+  font-family: 'Baloo 2', sans-serif;
+  font-size: 19px;
+  font-weight: 800;
+  color: var(--cat-color);
+  margin-bottom: 10px;
+  text-align: center;
+}
+
+.quiz-timer-wrap {
+  width: 100%;
+  height: 8px;
+  background: #F0E8ED;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.quiz-timer-bar {
+  height: 100%;
+  background: linear-gradient(90deg, var(--cat-color), #FFAE33);
+  width: 100%;
+  transition: width 0.05s linear;
+}
+
+.quiz-question-text {
+  font-family: 'Baloo 2', sans-serif;
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--text-dark);
+  line-height: 1.45;
+  margin-bottom: 18px;
+  text-align: center;
+}
+
+.quiz-options-list {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.quiz-option-btn {
+  background: #FFF9FC;
+  border: 2px solid #F4DEEA;
+  border-radius: 18px;
+  padding: 12px 16px;
+  font-family: 'Nunito', sans-serif;
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--text-dark);
+  text-align: left;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  transition: all 0.12s ease;
+}
+
+.quiz-option-btn:hover:not(:disabled) {
+  background: #FFF0F6;
+  border-color: var(--cat-color);
+  transform: translateX(4px);
+}
+
+.opt-badge {
+  background: #FFE8F2;
+  color: var(--cat-color);
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  font-weight: 800;
+  font-size: 13px;
+  flex-shrink: 0;
+}
+
+.quiz-option-btn.correct {
+  background: #E8F8F0 !important;
+  border-color: var(--success-green) !important;
+  color: #1E8449 !important;
+}
+
+.quiz-option-btn.correct .opt-badge {
+  background: var(--success-green);
+  color: #fff;
+}
+
+.quiz-option-btn.wrong {
+  background: #FDEED9 !important;
+  border-color: var(--danger-red) !important;
+  color: #C0392B !important;
+  animation: shake 0.35s ease;
+}
+
+.quiz-option-btn.wrong .opt-badge {
+  background: var(--danger-red);
+  color: #fff;
+}
+
+.quiz-feedback {
+  padding: 12px 16px;
+  border-radius: 16px;
+  font-size: 14px;
+  font-weight: 700;
+  text-align: center;
+  animation: popIn 0.2s ease;
+}
+
+.quiz-feedback.success {
+  background: #E8F8F0;
+  color: #196F3D;
+  border: 1.5px solid #A9DFBF;
+}
+
+.quiz-feedback.failure {
+  background: #FDEDEC;
+  color: #922B21;
+  border: 1.5px solid #F5B7B1;
+}
+
+.explanation {
+  font-size: 12.5px;
+  margin-top: 4px;
+  color: var(--text-muted);
+}
+
+/* ================= 結算畫面 (Game Over Modal) ================= */
+.gameover-card {
+  background: #FFFFFF;
+  border-radius: 36px;
+  padding: 32px 28px;
+  max-width: 540px;
+  width: 100%;
+  text-align: center;
+  border: 3.5px solid #FFE4EE;
+  box-shadow: 0 30px 70px rgba(0, 0, 0, 0.3);
+}
+
+.winner-trophy {
+  font-size: 68px;
+  margin-bottom: 8px;
+}
+
+.winner-title {
+  font-family: 'Baloo 2', sans-serif;
+  font-size: 32px;
+  font-weight: 800;
+  color: var(--cat-color);
+  margin-bottom: 6px;
+}
+
+.winner-reason {
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--text-muted);
+  margin-bottom: 22px;
+}
+
+.result-stats-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin-bottom: 26px;
+}
+
+.result-player-card {
+  flex: 1;
+  background: #FFF9FB;
+  border: 2px solid #FFE8F0;
+  border-radius: 20px;
+  padding: 16px 12px;
+}
+
+.rp-avatar { font-size: 40px; margin-bottom: 4px; }
+.rp-name { font-family: 'Baloo 2', sans-serif; font-size: 16px; font-weight: 800; margin-bottom: 8px; }
+.rp-score { font-size: 13.5px; margin-bottom: 4px; }
+.rp-count { font-size: 13.5px; color: var(--text-muted); }
+
+.result-vs {
+  font-family: 'Baloo 2', sans-serif;
+  font-weight: 800;
+  font-size: 22px;
+  color: #FFAE33;
+}
+
+.btn-restart {
+  background: linear-gradient(135deg, var(--cat-color), #FF9054);
+  color: #fff;
+  font-size: 18px;
+  padding: 14px 34px;
+}
+
+/* 動畫設定 */
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-5px); }
+  75% { transform: translateX(5px); }
+}
+
+@keyframes popIn {
+  0% { transform: scale(0.9); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.pop-in { animation: popIn 0.25s ease-out; }
+.bounce-slow { animation: float 2.5s infinite ease-in-out; }
+.bounce-slow-rev { animation: float 2.5s infinite ease-in-out 1.25s; }
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+.pulse {
+  animation: pulse 2s infinite ease-in-out;
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.03); }
+}
+
+/* 響應式優化 */
+@media (max-width: 768px) {
+  .mode-cards-grid, .avatar-select-grid {
+    grid-template-columns: 1fr;
+  }
+  .game-hud {
+    flex-direction: column;
+    gap: 12px;
+  }
+  .player-hud-card {
+    width: 100%;
+    justify-content: space-between;
+  }
+}
