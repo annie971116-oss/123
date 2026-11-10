@@ -193,14 +193,23 @@ export class HUD {
   /**
    * 更新當前行動者提示標籤
    */
-  updateTurnBadge(factionId, mode) {
+  updateTurnBadge(factionId, mode, myFaction = null) {
     if (!this.turnBadgeEl) return;
     const faction = GAME_CONFIG.FACTIONS[factionId];
     if (mode === 'ai') {
       this.turnBadgeEl.textContent = `🎯 點擊相鄰方格搶攻地盤！`;
       this.turnBadgeEl.className = 'turn-pill pill-active';
+    } else if (mode === 'online') {
+      const isMyTurn = factionId === myFaction;
+      if (isMyTurn) {
+        this.turnBadgeEl.textContent = `🎯 輪到你了！【${faction.avatar} ${faction.name}】請點擊相鄰方格！`;
+        this.turnBadgeEl.className = 'turn-pill pill-active';
+      } else {
+        this.turnBadgeEl.textContent = `⏳ 等待對手【${faction.avatar} ${faction.name}】作答中...`;
+        this.turnBadgeEl.className = `turn-pill pill-${factionId}`;
+      }
     } else {
-      this.turnBadgeEl.textContent = `當前行動：${faction.avatar} ${faction.name}`;
+      this.turnBadgeEl.textContent = `當前行動：${faction.avatar} ${faction.name}（同機交替）`;
       this.turnBadgeEl.className = `turn-pill pill-${factionId}`;
     }
   }

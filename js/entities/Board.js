@@ -269,6 +269,54 @@ export class Board {
   }
 
   /**
+   * 匯出地盤結構清單 (供線上雙人同步棋盤佈局)
+   */
+  exportTiles() {
+    return this.tiles.map((t) => ({
+      id: t.id,
+      col: t.col,
+      row: t.row,
+      colSpan: t.colSpan,
+      rowSpan: t.rowSpan,
+      score: t.score,
+      difficulty: t.difficulty,
+      isBase: t.isBase,
+      owner: t.owner,
+    }));
+  }
+
+  /**
+   * 匯入並還原地盤結構 (同步房主生成之棋盤)
+   */
+  importTiles(tilesData) {
+    this.tiles = [];
+    this.catBaseTile = null;
+    this.dogBaseTile = null;
+
+    tilesData.forEach((data) => {
+      const tile = new Tile({
+        id: data.id,
+        col: data.col,
+        row: data.row,
+        colSpan: data.colSpan,
+        rowSpan: data.rowSpan,
+        score: data.score,
+        difficulty: data.difficulty,
+        isBase: data.isBase,
+        baseFaction: data.owner && data.owner.startsWith('base_') ? data.owner.replace('base_', '') : null,
+      });
+      tile.owner = data.owner;
+
+      if (tile.isBase) {
+        if (tile.owner === 'base_cat') this.catBaseTile = tile;
+        if (tile.owner === 'base_dog') this.dogBaseTile = tile;
+      }
+
+      this.tiles.push(tile);
+    });
+  }
+
+  /**
    * 炸毀指定地盤，重置為無主中立地盤並觸發爆破特效
    */
   neutralizeTile(tile) {

@@ -356,11 +356,61 @@ body {
   position: relative;
 }
 
+.join-box-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+
 .join-box {
   display: flex;
   gap: 10px;
   width: 100%;
   max-width: 480px;
+}
+
+.room-status-badge {
+  font-family: 'Baloo 2', sans-serif;
+  font-size: 14px;
+  font-weight: 800;
+  padding: 8px 16px;
+  border-radius: 14px;
+  margin-top: 10px;
+  text-align: center;
+  transition: all 0.2s ease;
+  width: fit-content;
+  max-width: 90%;
+}
+
+.room-status-badge.waiting {
+  background: #FFFBE6;
+  border: 1.5px solid #FFE58F;
+  color: #D48806;
+  animation: pulse 1.5s infinite;
+}
+
+.room-status-badge.connected {
+  background: #F6FFED;
+  border: 1.5px solid #B7EB8F;
+  color: #389E0D;
+}
+
+.room-status-badge.error {
+  background: #FFF1F0;
+  border: 1.5px solid #FFA39E;
+  color: #CF1322;
+}
+
+.card-hotseat {
+  background: linear-gradient(135deg, #F9F0FF 0%, #F0E6FF 100%);
+  border-color: #D3ADF7;
+}
+
+.card-hotseat:hover {
+  border-color: #9254DE;
+  box-shadow: 0 12px 28px -6px rgba(146, 84, 222, 0.35);
 }
 
 .join-box input {

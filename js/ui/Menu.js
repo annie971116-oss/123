@@ -1,6 +1,6 @@
 /**
  * 主畫面與選單控制器 (Menu UI)
- * 負責模式選擇、電腦強度三段選擇 (簡單/普通/困難)、形象選擇 (貓或狗)、音量控制與遊戲結算畫面
+ * 負責模式選擇（電腦對抗 / 雙人線上即時連線 / 雙人同機輪流）、形象選擇、音量控制與即時房間配對
  */
 export class Menu {
   constructor({ audioSystem, roomManager, onStartGame }) {
@@ -23,17 +23,29 @@ export class Menu {
     this.volumeSlider = document.getElementById('volume-slider');
     this.muteBtn = document.getElementById('mute-btn');
 
+    // 房間配對相關 DOM
+    this.roomCodeDisplay = document.getElementById('room-code-display');
+    this.btnCopyCode = document.getElementById('btn-copy-code');
+    this.inputJoinCode = document.getElementById('input-join-code');
+    this.btnJoinRoom = document.getElementById('btn-join-room');
+    this.hostStatusEl = document.getElementById('host-connection-status');
+    this.joinStatusEl = document.getElementById('join-connection-status');
+
     // 當前選擇設定
-    this.selectedMode = 'ai'; // 'ai' | 'room'
+    this.selectedMode = 'ai'; // 'ai' | 'online' | 'hotseat'
     this.selectedAIDifficulty = 'normal'; // 'easy' | 'normal' | 'hard'
     this.selectedAvatar = 'cat'; // 'cat' | 'dog'
     this.roomCode = '';
+    this.isRoomHost = true;
+
+    this.joinTimeoutTimer = null;
 
     this.initEventListeners();
+    this.checkUrlRoomParam();
   }
 
   initEventListeners() {
-    // 1. 音量滑桿
+    // 1. 音量控制
     if (this.volumeSlider) {
       this.volumeSlider.addEventListener('input', (e) => {
         const val = parseFloat(e.target.value);
@@ -41,7 +53,6 @@ export class Menu {
       });
     }
 
-    // 2. 靜音切換
     if (this.muteBtn) {
       this.muteBtn.addEventListener('click', () => {
         const muted = this.audio.toggleMute();
@@ -50,9 +61,10 @@ export class Menu {
       });
     }
 
-    // 3. 模式選擇按鈕
+    // 2. 模式選擇按鈕
     const btnModeAI = document.getElementById('btn-mode-ai');
-    const btnModeRoom = document.getElementById('btn-mode-room');
+    const btnModeOnline = document.getElementById('btn-mode-online');
+    const btnModeHotseat = document.getElementById('btn-mode-hotseat');
 
     if (btnModeAI) {
       btnModeAI.addEventListener('click', () => {
@@ -62,16 +74,24 @@ export class Menu {
       });
     }
 
-    if (btnModeRoom) {
-      btnModeRoom.addEventListener('click', () => {
+    if (btnModeOnline) {
+      btnModeOnline.addEventListener('click', () => {
         this.audio.playClick();
-        this.selectedMode = 'room';
-        this.setupRoomStep();
+        this.selectedMode = 'online';
+        this.setupOnlineRoomStep();
         this.goToStep('room');
       });
     }
 
-    // 4. 電腦強度三段選擇按鈕
+    if (btnModeHotseat) {
+      btnModeHotseat.addEventListener('click', () => {
+        this.audio.playClick();
+        this.selectedMode = 'hotseat';
+        this.goToStep('avatar');
+      });
+    }
+
+    // 3. 電腦強度選擇按鈕
     const diffCards = document.querySelectorAll('.ai-diff-card');
     diffCards.forEach((card) => {
       card.addEventListener('click', () => {
@@ -99,59 +119,32 @@ export class Menu {
       });
     }
 
-    // 5. 雙人房間步驟按鈕
-    const btnCreateRoom = document.getElementById('btn-create-room');
-    const btnCopyCode = document.getElementById('btn-copy-code');
-    const btnJoinRoom = document.getElementById('btn-join-room');
-    const btnRoomBack = document.getElementById('btn-room-back');
-    const btnRoomNext = document.getElementById('btn-room-next');
-    const inputJoinCode = document.getElementById('input-join-code');
-    const roomCodeDisplay = document.getElementById('room-code-display');
-
-    if (btnCreateRoom) {
-      btnCreateRoom.addEventListener('click', () => {
-        this.audio.playClick();
-        this.roomCode = this.roomManager.generateRoomCode();
-        if (roomCodeDisplay) roomCodeDisplay.textContent = this.roomCode;
-        document.getElementById('room-created-box')?.classList.remove('hidden');
-      });
-    }
-
-    if (btnCopyCode) {
-      btnCopyCode.addEventListener('click', async () => {
+    // 4. 線上房間代碼複製按鈕
+    if (this.btnCopyCode) {
+      this.btnCopyCode.addEventListener('click', async () => {
         this.audio.playClick();
         const success = await this.roomManager.copyInviteMessage(this.roomCode);
-        btnCopyCode.textContent = success ? '✅ 已複製邀請！' : '代碼已就緒';
+        this.btnCopyCode.textContent = success ? '✅ 已複製專屬邀請連結！' : '代碼已就緒';
         setTimeout(() => {
-          btnCopyCode.textContent = '📋 複製邀請代碼';
-        }, 2000);
+          this.btnCopyCode.textContent = '📋 複製邀請代碼與連結';
+        }, 2500);
       });
     }
 
-    if (btnJoinRoom) {
-      btnJoinRoom.addEventListener('click', () => {
+    // 5. 訪客輸入代碼並加入按鈕
+    if (this.btnJoinRoom) {
+      this.btnJoinRoom.addEventListener('click', () => {
         this.audio.playClick();
-        const code = inputJoinCode?.value.trim().toUpperCase();
-        if (code && code.length >= 4) {
-          this.roomCode = code;
-          this.goToStep('avatar');
-        } else {
-          alert('請輸入正確的 4 碼房間邀請代碼！');
-        }
+        this.handleGuestJoin();
       });
     }
 
+    const btnRoomBack = document.getElementById('btn-room-back');
     if (btnRoomBack) {
       btnRoomBack.addEventListener('click', () => {
         this.audio.playClick();
+        this.roomManager.cleanup();
         this.goToStep('mode');
-      });
-    }
-
-    if (btnRoomNext) {
-      btnRoomNext.addEventListener('click', () => {
-        this.audio.playClick();
-        this.goToStep('avatar');
       });
     }
 
@@ -188,11 +181,12 @@ export class Menu {
           aiDifficulty: this.selectedAIDifficulty,
           avatar: this.selectedAvatar,
           roomCode: this.roomCode,
+          isHost: this.isRoomHost,
         });
       });
     }
 
-    // 7. 重新開始按鈕
+    // 7. 結算畫面重新開始按鈕
     const btnRestartGame = document.getElementById('btn-restart-game');
     if (btnRestartGame) {
       btnRestartGame.addEventListener('click', () => {
@@ -203,11 +197,132 @@ export class Menu {
     }
   }
 
-  setupRoomStep() {
+  /**
+   * 檢查網址參數是否帶有邀請代碼 (?room=CAT839)
+   */
+  checkUrlRoomParam() {
+    try {
+      const urlParams = new URLSearchParams(window.location.search);
+      const roomParam = urlParams.get('room') || urlParams.get('code');
+      if (roomParam) {
+        this.selectedMode = 'online';
+        if (this.inputJoinCode) {
+          this.inputJoinCode.value = roomParam.trim().toUpperCase();
+        }
+        this.setupOnlineRoomStep();
+        this.goToStep('room');
+      }
+    } catch (e) {
+      console.warn('URL param parse error:', e);
+    }
+  }
+
+  /**
+   * 初始化房主線上房間狀態
+   */
+  setupOnlineRoomStep() {
+    this.isRoomHost = true;
     this.roomCode = this.roomManager.generateRoomCode();
-    const roomCodeDisplay = document.getElementById('room-code-display');
-    if (roomCodeDisplay) roomCodeDisplay.textContent = this.roomCode;
-    document.getElementById('room-created-box')?.classList.remove('hidden');
+    if (this.roomCodeDisplay) this.roomCodeDisplay.textContent = this.roomCode;
+
+    if (this.hostStatusEl) {
+      this.hostStatusEl.className = 'room-status-badge waiting';
+      this.hostStatusEl.textContent = '⏳ 正在等待好友輸入代碼加入...（請將代碼傳給對方）';
+    }
+
+    if (this.joinStatusEl) {
+      this.joinStatusEl.className = 'room-status-badge hidden';
+    }
+
+    // 啟動房主節點監聽
+    this.roomManager.initHost(this.roomCode, {
+      onConnected: () => {
+        this.audio.playItemGet();
+        if (this.hostStatusEl) {
+          this.hostStatusEl.className = 'room-status-badge connected';
+          this.hostStatusEl.textContent = '🟢 好友已成功連線！即將選擇形象進入戰局...';
+        }
+        // 1.5 秒後自動推進至形象選擇
+        setTimeout(() => {
+          this.goToStep('avatar');
+        }, 1500);
+      },
+      onError: (err) => {
+        console.warn('Host error:', err);
+      },
+    });
+  }
+
+  /**
+   * 訪客點擊加入指定房間
+   */
+  handleGuestJoin() {
+    const code = this.inputJoinCode?.value.trim().toUpperCase();
+    if (!code || code.length < 4) {
+      alert('請輸入正確的 6 碼房間邀請代碼（例如 CAT839）！');
+      return;
+    }
+
+    this.isRoomHost = false;
+    this.roomCode = code;
+
+    if (this.btnJoinRoom) {
+      this.btnJoinRoom.disabled = true;
+      this.btnJoinRoom.textContent = '⏳ 連線搜尋中...';
+    }
+
+    if (this.joinStatusEl) {
+      this.joinStatusEl.className = 'room-status-badge waiting';
+      this.joinStatusEl.textContent = `🔄 正在搜尋並連線至房間【${code}】...`;
+      this.joinStatusEl.classList.remove('hidden');
+    }
+
+    // 超時檢測 (10 秒內未連上顯示提示)
+    if (this.joinTimeoutTimer) clearTimeout(this.joinTimeoutTimer);
+    this.joinTimeoutTimer = setTimeout(() => {
+      if (!this.roomManager.isConnected) {
+        if (this.btnJoinRoom) {
+          this.btnJoinRoom.disabled = false;
+          this.btnJoinRoom.textContent = '🚀 連線並加入房間';
+        }
+        if (this.joinStatusEl) {
+          this.joinStatusEl.className = 'room-status-badge error';
+          this.joinStatusEl.textContent = `❌ 無法配對房間【${code}】！請確認房主已在房間中等待，並檢查代碼大小寫是否正確。`;
+        }
+      }
+    }, 10000);
+
+    // 執行加入連線
+    this.roomManager.joinRoom(code, {
+      onConnected: () => {
+        if (this.joinTimeoutTimer) clearTimeout(this.joinTimeoutTimer);
+        this.audio.playItemGet();
+
+        if (this.btnJoinRoom) {
+          this.btnJoinRoom.textContent = '✅ 配對成功！';
+        }
+        if (this.joinStatusEl) {
+          this.joinStatusEl.className = 'room-status-badge connected';
+          this.joinStatusEl.textContent = `🟢 已成功連線至房主！等待房主開啟戰局...`;
+        }
+
+        // 訪客自動跳轉至準備戰局
+        setTimeout(() => {
+          this.goToStep('avatar');
+        }, 1200);
+      },
+      onError: (err) => {
+        if (this.joinTimeoutTimer) clearTimeout(this.joinTimeoutTimer);
+        if (this.btnJoinRoom) {
+          this.btnJoinRoom.disabled = false;
+          this.btnJoinRoom.textContent = '🚀 連線並加入房間';
+        }
+        if (this.joinStatusEl) {
+          this.joinStatusEl.className = 'room-status-badge error';
+          this.joinStatusEl.textContent = `❌ 連線失敗：${err?.message || '請確認網路狀態後重試'}`;
+        }
+      },
+    });
   }
 
   goToStep(stepName) {
@@ -244,59 +359,55 @@ export class Menu {
 
     const winnerIconEl = document.getElementById('result-winner-icon');
     const winnerTitleEl = document.getElementById('result-winner-title');
-    const reasonEl = document.getElementById('result-reason');
+    const winnerReasonEl = document.getElementById('result-reason');
     const statsDetailEl = document.getElementById('result-stats-detail');
 
     let winner = null;
-    let winReason = '';
+    let reasonText = '';
 
-    // 1. 第一順位：總得分高者勝
     if (p1.score > p2.score) {
       winner = p1;
-      winReason = `🏆 總得分高出對手 ${p1.score - p2.score} 分！`;
+      reasonText = `總分領先！${p1.faction.name} 奪得最高榮耀！`;
     } else if (p2.score > p1.score) {
       winner = p2;
-      winReason = `🏆 總得分高出對手 ${p2.score - p1.score} 分！`;
+      reasonText = `總分領先！${p2.faction.name} 稱霸棋盤！`;
     } else {
-      // 2. 第二順位：地盤數較多者勝
-      const t1 = p1.getTerritoryCount();
-      const t2 = p2.getTerritoryCount();
-      if (t1 > t2) {
+      if (p1.getTerritoryCount() > p2.getTerritoryCount()) {
         winner = p1;
-        winReason = `🏁 分數相同！但佔領地盤數多出 ${t1 - t2} 塊獲勝！`;
-      } else if (t2 > t1) {
+        reasonText = `分數同分，但佔領地盤更多！${p1.faction.name} 險勝！`;
+      } else if (p2.getTerritoryCount() > p1.getTerritoryCount()) {
         winner = p2;
-        winReason = `🏁 分數相同！但佔領地盤數多出 ${t2 - t1} 塊獲勝！`;
+        reasonText = `分數同分，但佔領地盤更多！${p2.faction.name} 險勝！`;
       } else {
-        // 3. 第三順位：平手
         winner = null;
-        winReason = '🤝 得分與地盤數完全相同！雙方握手言和！';
+        reasonText = '雙方分數與地盤數完全相同，平分秋色！世紀平手！';
       }
     }
 
     if (winner) {
-      if (winnerIconEl) winnerIconEl.textContent = `${winner.faction.avatar} 👑`;
-      if (winnerTitleEl) winnerTitleEl.textContent = `【${winner.faction.name}】大獲全勝！`;
+      if (winnerIconEl) winnerIconEl.textContent = '👑';
+      if (winnerTitleEl) winnerTitleEl.textContent = `🎉 恭喜【${winner.faction.name}】大獲全勝！`;
     } else {
-      if (winnerIconEl) winnerIconEl.textContent = '🐱 🤝 🐶';
-      if (winnerTitleEl) winnerTitleEl.textContent = '貓狗平手・共同統治！';
+      if (winnerIconEl) winnerIconEl.textContent = '🤝';
+      if (winnerTitleEl) winnerTitleEl.textContent = '🐾 勢均力敵！握手言和！';
     }
 
-    if (reasonEl) reasonEl.textContent = winReason;
+    if (winnerReasonEl) winnerReasonEl.textContent = reasonText;
+
     if (statsDetailEl) {
       statsDetailEl.innerHTML = `
         <div class="result-player-card">
           <div class="rp-avatar">${p1.faction.avatar}</div>
           <div class="rp-name">${p1.faction.name}</div>
-          <div class="rp-score">最終得分：<strong>${p1.score}</strong> 分</div>
-          <div class="rp-count">佔領地盤：<strong>${p1.getTerritoryCount()}</strong> 塊</div>
+          <div class="rp-score">⭐ 得分：<strong>${p1.score}</strong> 分</div>
+          <div class="rp-count">🚩 地盤數：<strong>${p1.getTerritoryCount()}</strong> 塊</div>
         </div>
         <div class="result-vs">VS</div>
         <div class="result-player-card">
           <div class="rp-avatar">${p2.faction.avatar}</div>
           <div class="rp-name">${p2.faction.name}</div>
-          <div class="rp-score">最終得分：<strong>${p2.score}</strong> 分</div>
-          <div class="rp-count">佔領地盤：<strong>${p2.getTerritoryCount()}</strong> 塊</div>
+          <div class="rp-score">⭐ 得分：<strong>${p2.score}</strong> 分</div>
+          <div class="rp-count">🚩 地盤數：<strong>${p2.getTerritoryCount()}</strong> 塊</div>
         </div>
       `;
     }

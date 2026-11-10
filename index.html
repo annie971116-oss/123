@@ -9,7 +9,9 @@
   <meta http-equiv="Expires" content="0">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Fredoka:wght@500;600;700&family=Nunito:wght@600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css?v=2.3">
+  <!-- P2P WebRTC 跨裝置即時連線函式庫 (PeerJS) -->
+  <script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js"></script>
+  <link rel="stylesheet" href="css/style.css?v=2.4">
 </head>
 <body>
 
@@ -44,13 +46,22 @@
             <span class="mode-badge">人氣首選</span>
           </button>
 
-          <button id="btn-mode-room" class="mode-card card-room">
+          <button id="btn-mode-online" class="mode-card card-room">
+            <div class="mode-icon">🌐</div>
+            <div class="mode-info">
+              <h3>雙人線上連線對戰</h3>
+              <p>輸入房間邀請代碼，跨手機/電腦即時配對！</p>
+            </div>
+            <span class="mode-badge">即時連線</span>
+          </button>
+
+          <button id="btn-mode-hotseat" class="mode-card card-hotseat">
             <div class="mode-icon">👥</div>
             <div class="mode-info">
-              <h3>雙人房間模式</h3>
-              <p>創建 4 碼邀請代碼（例如 CAT8），邀請好友對戰！</p>
+              <h3>雙人同機輪流對戰</h3>
+              <p>同一台電腦或平板輪流作答，免網路直接玩！</p>
             </div>
-            <span class="mode-badge">雙人對抗</span>
+            <span class="mode-badge">同機同樂</span>
           </button>
         </div>
       </div>
@@ -87,26 +98,33 @@
         </div>
       </div>
 
-      <!-- 步驟 1-B: 雙人房間代碼配置 -->
+      <!-- 步驟 1-B: 雙人線上房間連線配對 -->
       <div id="menu-step-room" class="menu-step hidden">
-        <h2 class="step-heading">【雙人對抗】房間代碼設定</h2>
+        <h2 class="step-heading">【雙人線上連線】房間代碼配對</h2>
         <div class="room-action-wrap">
-          <div id="room-created-box" class="room-box">
-            <div class="room-label">您的專屬房間邀請代碼：</div>
-            <div id="room-code-display" class="room-code-badge">----</div>
-            <button id="btn-copy-code" class="btn-action btn-copy">📋 複製邀請代碼</button>
-            <p class="room-hint">傳送代碼給好友，即可在同一房間或同機輪流對戰！</p>
-            <div class="step-actions">
-              <button id="btn-room-back" class="btn-action btn-copy">⬅ 返回重選模式</button>
-              <button id="btn-room-next" class="btn-action btn-primary">下一步：選擇形象 ➔</button>
+          <!-- 房主創建區 -->
+          <div class="room-box">
+            <div class="room-label">👑 您的專屬房間邀請代碼：</div>
+            <div id="room-code-display" class="room-code-badge">------</div>
+            <button id="btn-copy-code" class="btn-action btn-copy">📋 複製邀請代碼與連結</button>
+            <div id="host-connection-status" class="room-status-badge waiting">
+              ⏳ 正在等待好友輸入代碼加入...（請將代碼傳給對方）
             </div>
           </div>
 
-          <div class="room-divider">或輸入好友代碼</div>
+          <div class="room-divider">或輸入好友的房間代碼加入</div>
 
-          <div class="join-box">
-            <input type="text" id="input-join-code" placeholder="輸入 4 碼房間代碼 (如 CAT7)" maxlength="6">
-            <button id="btn-join-room" class="btn-action btn-secondary">輸入代碼並加入</button>
+          <!-- 訪客加入區 -->
+          <div class="join-box-wrap">
+            <div class="join-box">
+              <input type="text" id="input-join-code" placeholder="輸入好友的 6 碼代碼 (如 CAT839)" maxlength="10">
+              <button id="btn-join-room" class="btn-action btn-secondary">🚀 連線並加入房間</button>
+            </div>
+            <div id="join-connection-status" class="room-status-badge hidden"></div>
+          </div>
+
+          <div class="step-actions">
+            <button id="btn-room-back" class="btn-action btn-copy">⬅ 返回重選模式</button>
           </div>
         </div>
       </div>
@@ -265,7 +283,7 @@
     </div>
   </div>
 
-  <!-- 應用程式模組進入點 (加上快取破壞參數 ?v=2.3) -->
-  <script type="module" src="js/main.js?v=2.3"></script>
+  <!-- 應用程式模組進入點 (加上快取破壞參數 ?v=2.4) -->
+  <script type="module" src="js/main.js?v=2.4"></script>
 </body>
 </html>
