@@ -23,6 +23,9 @@ export class Tile {
     this.isGoldenFlash = false;
     this.goldenTimeLeft = 0;
 
+    // ⚔️ 雙人即時爭奪鎖定狀態 ('cat' | 'dog' | null)
+    this.contestedBy = null;
+
     // 💣 炸彈轟炸動畫狀態
     this.isBombExploding = false;
   }
@@ -151,6 +154,11 @@ export class Tile {
       this.element.classList.add('tile-golden-flash');
     }
 
+    // 爭奪鎖定特效
+    if (this.contestedBy) {
+      this.element.classList.add('tile-contested');
+    }
+
     // 炸彈轟炸特效
     if (this.isBombExploding) {
       this.element.classList.add('tile-bomb-exploding');
@@ -168,7 +176,10 @@ export class Tile {
 
     // 內容排版
     let ownerAvatar = '';
-    if (this.owner === 'cat') {
+    if (this.contestedBy) {
+      const isCatContest = this.contestedBy === 'cat';
+      ownerAvatar = `<div class="contested-badge pulse">⚔️ ${isCatContest ? '🐱 喵喵搶奪中' : '🐶 汪汪搶奪中'}</div>`;
+    } else if (this.owner === 'cat') {
       ownerAvatar = '<div class="owner-avatar bounce">🐱 喵喵已佔領</div>';
     } else if (this.owner === 'dog') {
       ownerAvatar = '<div class="owner-avatar bounce">🐶 汪汪已佔領</div>';

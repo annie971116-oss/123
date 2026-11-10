@@ -210,7 +210,9 @@ export class Board {
       if (tile.owner === factionId) return false;
       // 3. 該陣營是否處於答錯冷卻中
       if (tile.isCoolingDown(factionId)) return false;
-      // 4. 是否與自身地盤相鄰共邊
+      // 4. 若已被對手搶先點擊作答中，暫時鎖定不可重疊點擊
+      if (tile.contestedBy && tile.contestedBy !== factionId) return false;
+      // 5. 是否與自身地盤相鄰共邊
       return tile.isAdjacentToCells(factionCells);
     });
   }

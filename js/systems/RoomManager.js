@@ -67,10 +67,10 @@ export class RoomManager {
     this.isHost = true;
     this.isConnected = false;
 
-    this.onConnectedCallback = onConnected || (() => {});
-    this.onMessageCallback = onMessage || (() => {});
-    this.onDisconnectedCallback = onDisconnected || (() => {});
-    this.onErrorCallback = onError || (() => {});
+    if (onConnected) this.onConnectedCallback = onConnected;
+    if (onMessage) this.onMessageCallback = onMessage;
+    if (onDisconnected) this.onDisconnectedCallback = onDisconnected;
+    if (onError) this.onErrorCallback = onError;
 
     const cleanCode = this.roomCode.toLowerCase();
     const hostPeerId = `catdog-room-${cleanCode}`;
@@ -127,10 +127,10 @@ export class RoomManager {
     this.isHost = false;
     this.isConnected = false;
 
-    this.onConnectedCallback = onConnected || (() => {});
-    this.onMessageCallback = onMessage || (() => {});
-    this.onDisconnectedCallback = onDisconnected || (() => {});
-    this.onErrorCallback = onError || (() => {});
+    if (onConnected) this.onConnectedCallback = onConnected;
+    if (onMessage) this.onMessageCallback = onMessage;
+    if (onDisconnected) this.onDisconnectedCallback = onDisconnected;
+    if (onError) this.onErrorCallback = onError;
 
     const cleanCode = this.roomCode.toLowerCase();
     const hostPeerId = `catdog-room-${cleanCode}`;
