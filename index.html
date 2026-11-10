@@ -9,7 +9,7 @@
   <meta http-equiv="Expires" content="0">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Fredoka:wght@500;600;700&family=Nunito:wght@600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css?v=2.2">
+  <link rel="stylesheet" href="css/style.css?v=2.3">
 </head>
 <body>
 
@@ -152,7 +152,10 @@
       <div class="player-hud-card p1-card">
         <div class="hud-avatar" id="p1-avatar">🐱</div>
         <div class="hud-details">
-          <div class="hud-name" id="p1-name">貓咪軍團</div>
+          <div class="hud-name-row">
+            <span class="hud-name" id="p1-name">貓咪軍團</span>
+            <span id="p1-status" class="player-status-tag hidden">🧊 冰凍中 10s</span>
+          </div>
           <div class="hud-stats">
             <span class="hud-pill pill-score">⭐ <span id="p1-score">0 分</span></span>
             <span class="hud-pill pill-territory">🚩 <span id="p1-territory">0 塊</span></span>
@@ -174,7 +177,10 @@
       <!-- 右上角：玩家 2 (對手 / AI) -->
       <div class="player-hud-card p2-card">
         <div class="hud-details text-right">
-          <div class="hud-name" id="p2-name">狗狗軍團</div>
+          <div class="hud-name-row justify-end">
+            <span id="p2-status" class="player-status-tag hidden">🧊 冰凍中 10s</span>
+            <span class="hud-name" id="p2-name">狗狗軍團</span>
+          </div>
           <div class="hud-stats justify-end">
             <span class="hud-pill pill-score">⭐ <span id="p2-score">0 分</span></span>
             <span class="hud-pill pill-territory">🚩 <span id="p2-territory">0 塊</span></span>
@@ -183,6 +189,38 @@
         <div class="hud-avatar" id="p2-avatar">🐶</div>
       </div>
     </header>
+
+    <!-- 戰況即時快訊橫幅 -->
+    <div id="combat-banner" class="combat-banner hidden"></div>
+
+    <!-- 玩家互動戰術道具列 -->
+    <section class="tactical-item-dock" id="tactical-item-dock">
+      <div class="dock-header">
+        <span class="dock-title">🎒 戰術攻擊道具：</span>
+        <span class="dock-hint">（搶答黃金地盤或答對連勝可掉落道具！）</span>
+      </div>
+      <div class="dock-buttons">
+        <button id="btn-item-freeze" class="btn-tactical item-freeze" title="點擊發動：冰凍對手 10 秒無法行動">
+          <span class="item-icon">❄️</span>
+          <span class="item-name">定身術</span>
+          <span class="item-count" id="count-freeze">x1</span>
+        </button>
+        <button id="btn-item-bomb" class="btn-tactical item-bomb" title="點擊發動：轟炸對手最高分地盤重置為中立">
+          <span class="item-icon">💣</span>
+          <span class="item-name">肉球轟炸</span>
+          <span class="item-count" id="count-bomb">x1</span>
+        </button>
+        <button id="btn-item-shield" class="btn-tactical item-shield" title="點擊發動：金鐘護盾 25 秒抵擋轟炸並免除答錯倒扣">
+          <span class="item-icon">🛡️</span>
+          <span class="item-name">守護金盾</span>
+          <span class="item-count" id="count-shield">x1</span>
+        </button>
+      </div>
+      <div class="dock-extra">
+        <div id="hud-combo-badge" class="combo-pill hidden">🔥 2 連勝！</div>
+        <div id="hud-fever-badge" class="fever-pill hidden">⚡ 狂熱時間 +50% 分數！</div>
+      </div>
+    </section>
 
     <!-- 異構尺寸地盤棋盤 -->
     <main class="board-container">
@@ -227,7 +265,7 @@
     </div>
   </div>
 
-  <!-- 應用程式模組進入點 (加上快取破壞參數 ?v=2.2) -->
-  <script type="module" src="js/main.js?v=2.2"></script>
+  <!-- 應用程式模組進入點 (加上快取破壞參數 ?v=2.3) -->
+  <script type="module" src="js/main.js?v=2.3"></script>
 </body>
 </html>

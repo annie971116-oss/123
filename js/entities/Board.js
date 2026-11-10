@@ -216,6 +216,69 @@ export class Board {
   }
 
   /**
+   * 隨機觸發「限時黃金急迫搶答」地盤
+   * 優先挑選中立或相鄰的非基地地盤
+   */
+  spawnGoldenFlash(durationSeconds = 20) {
+    this.clearGoldenFlash();
+
+    const candidates = this.tiles.filter((t) => !t.isBase);
+    if (candidates.length === 0) return null;
+
+    const neutrals = candidates.filter((t) => !t.owner);
+    const pool = neutrals.length > 0 ? neutrals : candidates;
+
+    const chosen = pool[Math.floor(Math.random() * pool.length)];
+    chosen.setGoldenFlash(durationSeconds);
+    return chosen;
+  }
+
+  getGoldenTile() {
+    return this.tiles.find((t) => t.isGoldenFlash) || null;
+  }
+
+  clearGoldenFlash() {
+    this.tiles.forEach((t) => {
+      if (t.isGoldenFlash) t.clearGoldenFlash();
+    });
+  }
+
+  tickGoldenFlash() {
+    const goldenTile = this.getGoldenTile();
+    if (!goldenTile) return false;
+
+    goldenTile.goldenTimeLeft -= 1;
+    if (goldenTile.goldenTimeLeft <= 0) {
+      goldenTile.clearGoldenFlash();
+      return true; // 已過期解除
+    }
+    return false;
+  }
+
+  /**
+   * 尋找指定對手陣營佔領的分數最高地盤（作為轟炸鎖定目標）
+   */
+  getHighestOpponentTile(opponentFactionId) {
+    const opponentTiles = this.tiles.filter(
+      (t) => !t.isBase && t.owner === opponentFactionId
+    );
+    if (opponentTiles.length === 0) return null;
+
+    opponentTiles.sort((a, b) => b.score - a.score);
+    return opponentTiles[0];
+  }
+
+  /**
+   * 炸毀指定地盤，重置為無主中立地盤並觸發爆破特效
+   */
+  neutralizeTile(tile) {
+    if (!tile || tile.isBase) return false;
+    tile.owner = null;
+    tile.triggerBombExplosion(1200);
+    return true;
+  }
+
+  /**
    * 渲染整個棋盤至容器
    */
   render(currentTurnFactionId, onTileClick) {

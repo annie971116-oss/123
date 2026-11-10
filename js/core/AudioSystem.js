@@ -200,6 +200,156 @@ export class AudioSystem {
     });
   }
 
+  /** 🌟 限時黃金寶藏地盤降臨警報音 */
+  playAlert() {
+    this.init();
+    this.resume();
+    if (!this.ctx) return;
+
+    const notes = [587.33, 880.0, 1174.66]; // D5, A5, D6
+    notes.forEach((freq, idx) => {
+      const t = this.ctx.currentTime + idx * 0.09;
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(freq, t);
+
+      gain.gain.setValueAtTime(0.35, t);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.22);
+
+      osc.connect(gain);
+      gain.connect(this.sfxGain);
+
+      osc.start(t);
+      osc.stop(t + 0.23);
+    });
+  }
+
+  /** ❄️ 冰凍定身術音效 (水晶結冰) */
+  playFreeze() {
+    this.init();
+    this.resume();
+    if (!this.ctx) return;
+
+    const freqs = [1046.5, 783.99, 587.33, 392.0]; // C6, G5, D5, G4
+    freqs.forEach((freq, idx) => {
+      const t = this.ctx.currentTime + idx * 0.06;
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(freq, t);
+
+      gain.gain.setValueAtTime(0.28, t);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.2);
+
+      osc.connect(gain);
+      gain.connect(this.sfxGain);
+
+      osc.start(t);
+      osc.stop(t + 0.22);
+    });
+  }
+
+  /** 💣 炸彈轟炸引爆音效 (可愛卡通低音爆破) */
+  playBomb() {
+    this.init();
+    this.resume();
+    if (!this.ctx) return;
+
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(220, this.ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(45, this.ctx.currentTime + 0.35);
+
+    gain.gain.setValueAtTime(0.5, this.ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.35);
+
+    osc.connect(gain);
+    gain.connect(this.sfxGain);
+
+    osc.start();
+    osc.stop(this.ctx.currentTime + 0.36);
+  }
+
+  /** 🛡️ 金牌護盾啟動音效 */
+  playShield() {
+    this.init();
+    this.resume();
+    if (!this.ctx) return;
+
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(440, this.ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(880, this.ctx.currentTime + 0.25);
+
+    gain.gain.setValueAtTime(0.3, this.ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.28);
+
+    osc.connect(gain);
+    gain.connect(this.sfxGain);
+
+    osc.start();
+    osc.stop(this.ctx.currentTime + 0.3);
+  }
+
+  /** 🎁 獲得戰術道具音效 */
+  playItemGet() {
+    this.init();
+    this.resume();
+    if (!this.ctx) return;
+
+    const notes = [659.25, 987.77, 1318.51]; // E5, B5, E6
+    notes.forEach((freq, idx) => {
+      const t = this.ctx.currentTime + idx * 0.08;
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(freq, t);
+
+      gain.gain.setValueAtTime(0.3, t);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.22);
+
+      osc.connect(gain);
+      gain.connect(this.sfxGain);
+
+      osc.start(t);
+      osc.stop(t + 0.24);
+    });
+  }
+
+  /** 🔥 連勝狂熱 (Combo Rush) 音效 */
+  playCombo() {
+    this.init();
+    this.resume();
+    if (!this.ctx) return;
+
+    const notes = [440, 554.37, 659.25, 880, 1108.73];
+    notes.forEach((freq, idx) => {
+      const t = this.ctx.currentTime + idx * 0.06;
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(freq, t);
+
+      gain.gain.setValueAtTime(0.35, t);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.2);
+
+      osc.connect(gain);
+      gain.connect(this.sfxGain);
+
+      osc.start(t);
+      osc.stop(t + 0.22);
+    });
+  }
+
   // ================= 可愛背景音樂 (BGM) =================
 
   startBGM() {

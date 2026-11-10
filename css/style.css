@@ -1055,6 +1055,264 @@ body {
   50% { transform: scale(1.03); }
 }
 
+/* ================= 戰況即時快訊橫幅 ================= */
+.combat-banner {
+  background: linear-gradient(135deg, #FFF8E6 0%, #FFE9B3 100%);
+  border: 2px solid #FFC94D;
+  border-radius: 20px;
+  padding: 10px 18px;
+  margin-bottom: 12px;
+  text-align: center;
+  font-family: 'Baloo 2', sans-serif;
+  font-weight: 800;
+  font-size: 15px;
+  color: #8C5200;
+  box-shadow: 0 8px 24px rgba(255, 184, 48, 0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.25s ease;
+}
+
+.combat-banner.banner-freeze {
+  background: linear-gradient(135deg, #E6F7FF 0%, #BAE7FF 100%);
+  border-color: #69C0FF;
+  color: #0050B3;
+  box-shadow: 0 8px 24px rgba(24, 144, 255, 0.25);
+}
+
+.combat-banner.banner-bomb {
+  background: linear-gradient(135deg, #FFF1F0 0%, #FFCCC7 100%);
+  border-color: #FF7875;
+  color: #A8071A;
+  box-shadow: 0 8px 24px rgba(245, 34, 45, 0.25);
+}
+
+.combat-banner.banner-golden {
+  background: linear-gradient(135deg, #FFFBE6 0%, #FFE58F 100%);
+  border-color: #FFC53D;
+  color: #874D00;
+  box-shadow: 0 8px 24px rgba(250, 173, 20, 0.35);
+  animation: pulse-golden 1.2s infinite;
+}
+
+@keyframes pulse-golden {
+  0%, 100% { box-shadow: 0 0 0 2px rgba(250, 173, 20, 0.4), 0 8px 24px rgba(250, 173, 20, 0.3); }
+  50% { box-shadow: 0 0 0 5px rgba(250, 173, 20, 0.7), 0 10px 30px rgba(250, 173, 20, 0.5); }
+}
+
+/* ================= 戰術互動道具欄 ================= */
+.tactical-item-dock {
+  background: var(--card-bg);
+  border: 2px solid #FFEBF1;
+  border-radius: 24px;
+  padding: 10px 18px;
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.04);
+}
+
+.dock-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.dock-title {
+  font-family: 'Baloo 2', sans-serif;
+  font-weight: 800;
+  font-size: 15px;
+  color: var(--text-dark);
+}
+
+.dock-hint {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+
+.dock-buttons {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.btn-tactical {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  border-radius: 16px;
+  border: 2px solid transparent;
+  cursor: pointer;
+  font-family: 'Baloo 2', 'Nunito', sans-serif;
+  font-weight: 800;
+  font-size: 13.5px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.06);
+  transition: all 0.15s ease;
+  user-select: none;
+}
+
+.btn-tactical:not(:disabled):hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.12);
+}
+
+.btn-tactical:not(:disabled):active {
+  transform: translateY(1px);
+}
+
+.btn-tactical:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  filter: grayscale(60%);
+  transform: none !important;
+}
+
+.item-freeze {
+  background: linear-gradient(135deg, #E6F7FF 0%, #BAE7FF 100%);
+  border-color: #91D5FF;
+  color: #0050B3;
+}
+
+.item-bomb {
+  background: linear-gradient(135deg, #FFF1F0 0%, #FFCCC7 100%);
+  border-color: #FFA39E;
+  color: #CF1322;
+}
+
+.item-shield {
+  background: linear-gradient(135deg, #FFFBE6 0%, #FFE58F 100%);
+  border-color: #FFD666;
+  color: #D48806;
+}
+
+.item-count {
+  background: rgba(255, 255, 255, 0.85);
+  padding: 2px 7px;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.dock-extra {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.combo-pill {
+  background: linear-gradient(135deg, #FF7A45 0%, #FF4D4F 100%);
+  color: #fff;
+  font-family: 'Baloo 2', sans-serif;
+  font-weight: 800;
+  font-size: 12.5px;
+  padding: 4px 12px;
+  border-radius: 14px;
+  box-shadow: 0 4px 12px rgba(255, 77, 79, 0.35);
+  animation: pulse 1.2s infinite;
+}
+
+.fever-pill {
+  background: linear-gradient(135deg, #FA8C16 0%, #FAAD14 100%);
+  color: #fff;
+  font-family: 'Baloo 2', sans-serif;
+  font-weight: 800;
+  font-size: 12.5px;
+  padding: 4px 12px;
+  border-radius: 14px;
+  box-shadow: 0 4px 12px rgba(250, 140, 22, 0.35);
+  animation: pulse 1s infinite;
+}
+
+/* ================= 狀態標籤 (冰凍 / 護盾) ================= */
+.hud-name-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.player-status-tag {
+  font-size: 11px;
+  font-weight: 800;
+  padding: 2px 8px;
+  border-radius: 10px;
+}
+
+.status-frozen {
+  background: #BAE7FF;
+  color: #003A8C;
+  border: 1px solid #91D5FF;
+  animation: shake 0.6s infinite;
+}
+
+.status-shielded {
+  background: #FFF566;
+  color: #874D00;
+  border: 1px solid #FFE58F;
+}
+
+.card-frozen {
+  background: #E6F7FF !important;
+  border-color: #69C0FF !important;
+  filter: drop-shadow(0 0 10px rgba(105, 192, 255, 0.6));
+}
+
+/* ================= 限時黃金急迫挑戰地盤 ================= */
+.board-tile.tile-golden-flash {
+  border: 3.5px solid #FFC53D !important;
+  background: linear-gradient(135deg, #FFFDF0 0%, #FFF4CC 50%, #FFEBA3 100%) !important;
+  box-shadow: 0 0 0 3px rgba(255, 197, 61, 0.4), 0 8px 24px rgba(255, 184, 48, 0.45) !important;
+  animation: golden-flash-glow 1.2s infinite ease-in-out !important;
+}
+
+@keyframes golden-flash-glow {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 2px rgba(255, 197, 61, 0.5), 0 6px 18px rgba(255, 184, 48, 0.4);
+  }
+  50% {
+    transform: scale(1.02);
+    box-shadow: 0 0 0 5px rgba(255, 197, 61, 0.8), 0 12px 30px rgba(255, 184, 48, 0.65);
+  }
+}
+
+.golden-flash-pill {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  background: linear-gradient(135deg, #FA541C 0%, #FA8C16 100%);
+  color: #fff;
+  font-family: 'Baloo 2', sans-serif;
+  font-weight: 800;
+  font-size: 11px;
+  padding: 2px 7px;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(250, 84, 28, 0.4);
+  z-index: 5;
+}
+
+/* 炸彈轟炸引爆特效 */
+.board-tile.tile-bomb-exploding {
+  animation: bomb-shake 0.8s ease-in-out !important;
+  background: linear-gradient(135deg, #FFA39E 0%, #FF4D4F 100%) !important;
+  border-color: #CF1322 !important;
+}
+
+@keyframes bomb-shake {
+  0% { transform: scale(1); }
+  20% { transform: scale(1.15) rotate(-3deg); filter: brightness(1.5); }
+  40% { transform: scale(0.9) rotate(3deg); filter: brightness(1.8); }
+  60% { transform: scale(1.05) rotate(-2deg); }
+  80% { transform: scale(0.95) rotate(1deg); }
+  100% { transform: scale(1) rotate(0deg); }
+}
+
 /* 響應式優化 */
 @media (max-width: 768px) {
   .mode-cards-grid, .avatar-select-grid, .ai-diff-grid {
@@ -1067,5 +1325,12 @@ body {
   .player-hud-card {
     width: 100%;
     justify-content: space-between;
+  }
+  .tactical-item-dock {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .dock-buttons {
+    justify-content: space-around;
   }
 }

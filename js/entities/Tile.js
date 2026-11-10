@@ -1,6 +1,6 @@
 /**
  * 地盤格子實體 (Tile Entity)
- * 記錄網格跨距 (colSpan, rowSpan)、分數 (10~100)、題目難度、佔領者與冷卻狀態
+ * 記錄網格跨距 (colSpan, rowSpan)、分數 (10~100)、題目難度、佔領者、冷卻狀態與限時黃金急迫挑戰狀態
  */
 export class Tile {
   constructor({ id, col, row, colSpan = 1, rowSpan = 1, score = 10, difficulty = 1, isBase = false, baseFaction = null }) {
@@ -18,6 +18,13 @@ export class Tile {
 
     this.cooldowns = { cat: 0, dog: 0 }; // 答錯冷卻截止時間戳 (ms)
     this.element = null;                 // DOM 參照
+
+    // 🌟 限時黃金急迫搶答狀態
+    this.isGoldenFlash = false;
+    this.goldenTimeLeft = 0;
+
+    // 💣 炸彈轟炸動畫狀態
+    this.isBombExploding = false;
   }
 
   /**
@@ -64,6 +71,29 @@ export class Tile {
    */
   setCooldown(factionId, seconds) {
     this.cooldowns[factionId] = Date.now() + seconds * 1000;
+  }
+
+  /**
+   * 啟用限時黃金急迫挑戰
+   */
+  setGoldenFlash(seconds = 20) {
+    this.isGoldenFlash = true;
+    this.goldenTimeLeft = seconds;
+  }
+
+  clearGoldenFlash() {
+    this.isGoldenFlash = false;
+    this.goldenTimeLeft = 0;
+  }
+
+  triggerBombExplosion(durationMs = 1200) {
+    this.isBombExploding = true;
+    setTimeout(() => {
+      this.isBombExploding = false;
+      if (this.element) {
+        this.element.classList.remove('tile-bomb-exploding');
+      }
+    }, durationMs);
   }
 
   /**
@@ -116,6 +146,16 @@ export class Tile {
       this.element.classList.add('tile-selectable');
     }
 
+    // 限時黃金急迫挑戰高亮
+    if (this.isGoldenFlash) {
+      this.element.classList.add('tile-golden-flash');
+    }
+
+    // 炸彈轟炸特效
+    if (this.isBombExploding) {
+      this.element.classList.add('tile-bomb-exploding');
+    }
+
     // 冷卻遮罩檢測
     const now = Date.now();
     const hasCooldown = (this.cooldowns.cat > now) || (this.cooldowns.dog > now);
@@ -136,9 +176,22 @@ export class Tile {
       ownerAvatar = '<div class="neutral-flag">🏳️ 點擊佔領</div>';
     }
 
+    // 限時黃金徽章與分數倍數標籤
+    let goldenBadgeHtml = '';
+    let scoreDisplay = `${this.score} 分`;
+    if (this.isGoldenFlash) {
+      goldenBadgeHtml = `
+        <div class="golden-flash-pill pulse">
+          ⚡ 限時 ${this.goldenTimeLeft}s
+        </div>
+      `;
+      scoreDisplay = `🌟 雙倍 ${this.score * 2} 分 + 道具！`;
+    }
+
     this.element.innerHTML = `
+      ${goldenBadgeHtml}
       <div class="tile-header">
-        <span class="tile-score">${this.score} 分</span>
+        <span class="tile-score">${scoreDisplay}</span>
         <span class="tile-diff" title="難度等級 ${this.difficulty}">${diffStars}</span>
       </div>
       <div class="tile-body">
