@@ -11,7 +11,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Fredoka:wght@500;600;700&family=Nunito:wght@600;700;800&display=swap" rel="stylesheet">
   <!-- P2P WebRTC 跨裝置即時連線函式庫 (PeerJS) -->
   <script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js"></script>
-  <link rel="stylesheet" href="css/style.css?v=2.5">
+  <link rel="stylesheet" href="css/style.css?v=2.6">
 </head>
 <body>
 
@@ -190,6 +190,9 @@
         <div id="hud-turn-badge" class="turn-pill pill-active">
           🎯 點擊相鄰方格搶攻地盤！
         </div>
+        <button id="btn-quit-game" class="btn-quit-game" title="結束本局並返回主畫面">
+          🏠 回到主畫面
+        </button>
       </div>
 
       <!-- 右上角：玩家 2 (對手 / AI) -->
@@ -283,7 +286,20 @@
     </div>
   </div>
 
-  <!-- 應用程式模組進入點 (加上快取破壞參數 ?v=2.5) -->
-  <script type="module" src="js/main.js?v=2.5"></script>
+  <!-- ================= 放棄/返回主畫面確認彈窗 ================= -->
+  <div id="quit-modal" class="modal-overlay hidden">
+    <div class="quit-card pop-in">
+      <div class="quit-icon">🚪</div>
+      <h2 class="quit-title">要回到主畫面嗎？</h2>
+      <p class="quit-desc">若現在返回主畫面，本局遊戲將會直接結束喔！</p>
+      <div class="quit-actions">
+        <button id="btn-cancel-quit" class="btn-action btn-cancel">繼續遊戲 🐾</button>
+        <button id="btn-confirm-quit" class="btn-action btn-confirm-quit">確認退出 🏠</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 應用程式模組進入點 (加上快取破壞參數 ?v=2.6) -->
+  <script type="module" src="js/main.js?v=2.6"></script>
 </body>
 </html>

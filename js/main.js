@@ -1,14 +1,14 @@
-import { GAME_CONFIG } from './config.js?v=2.5';
-import { questionManager } from './data/questions.js?v=2.5';
-import { AudioSystem } from './core/AudioSystem.js?v=2.5';
-import { GameLoop } from './core/GameLoop.js?v=2.5';
-import { RoomManager } from './systems/RoomManager.js?v=2.5';
-import { AISystem } from './systems/AISystem.js?v=2.5';
-import { Player } from './entities/Player.js?v=2.5';
-import { Board } from './entities/Board.js?v=2.5';
-import { HUD } from './ui/HUD.js?v=2.5';
-import { QuizModal } from './ui/QuizModal.js?v=2.5';
-import { Menu } from './ui/Menu.js?v=2.5';
+import { GAME_CONFIG } from './config.js?v=2.6';
+import { questionManager } from './data/questions.js?v=2.6';
+import { AudioSystem } from './core/AudioSystem.js?v=2.6';
+import { GameLoop } from './core/GameLoop.js?v=2.6';
+import { RoomManager } from './systems/RoomManager.js?v=2.6';
+import { AISystem } from './systems/AISystem.js?v=2.6';
+import { Player } from './entities/Player.js?v=2.6';
+import { Board } from './entities/Board.js?v=2.6';
+import { HUD } from './ui/HUD.js?v=2.6';
+import { QuizModal } from './ui/QuizModal.js?v=2.6';
+import { Menu } from './ui/Menu.js?v=2.6';
 
 /**
  * 貓狗大戰：常識地盤爭奪戰 - 主控制器 (Main Application Controller)
@@ -28,13 +28,20 @@ class GameApp {
     this.boardEl = document.getElementById('game-board');
     this.board = new Board(this.boardEl);
 
-    this.player1 = null;
+    // 玩家陣營實體
+    this.myPlayer = null;
+    this.opponentPlayer = null;
+    this.players = {};
+
+    this.player1 = null; // 向下相容
     this.player2 = null;
+
     this.currentTurnFaction = 'cat';
     this.gameMode = 'ai'; // 'ai' | 'online' | 'hotseat'
     this.aiDifficulty = 'normal'; // 'easy' | 'normal' | 'hard'
     this.isHost = true;
     this.myFaction = 'cat';
+    this.opponentFaction = 'dog';
 
     this.aiSystem = null;
     this.isAnsweringQuiz = false;
@@ -67,6 +74,68 @@ class GameApp {
 
   init() {
     this.menu.showMenu();
+    this.initQuitModal();
+  }
+
+  /**
+   * 初始化「回到主畫面」按鈕與二次確認彈窗
+   */
+  initQuitModal() {
+    const btnQuitGame = document.getElementById('btn-quit-game');
+    const quitModal = document.getElementById('quit-modal');
+    const btnCancelQuit = document.getElementById('btn-cancel-quit');
+    const btnConfirmQuit = document.getElementById('btn-confirm-quit');
+
+    if (btnQuitGame && quitModal) {
+      btnQuitGame.addEventListener('click', () => {
+        this.audio.playClick();
+        quitModal.classList.remove('hidden');
+      });
+    }
+
+    if (btnCancelQuit && quitModal) {
+      btnCancelQuit.addEventListener('click', () => {
+        this.audio.playClick();
+        quitModal.classList.add('hidden');
+      });
+    }
+
+    if (btnConfirmQuit && quitModal) {
+      btnConfirmQuit.addEventListener('click', () => {
+        this.audio.playClick();
+        quitModal.classList.add('hidden');
+        this.quitToMainMenu();
+      });
+    }
+  }
+
+  /**
+   * 放棄本局對戰直接回到主選單
+   */
+  quitToMainMenu() {
+    this.isGameOver = true;
+    this.isAnsweringQuiz = false;
+
+    this.gameLoop.stop();
+    if (this.aiSystem) {
+      this.aiSystem.stop();
+      this.aiSystem = null;
+    }
+
+    this.quizModal.close();
+    this.audio.stopBGM();
+
+    if (this.gameMode === 'online') {
+      try {
+        this.roomManager.send({
+          type: 'REMOTE_SURRENDER',
+          senderFaction: this.myFaction,
+        });
+      } catch (e) {}
+      this.roomManager.cleanup();
+    }
+
+    this.menu.showMenu();
   }
 
   /**
@@ -95,15 +164,20 @@ class GameApp {
    * 單人電腦對抗模式配置 (玩家與電腦同時即時搶地)
    */
   setupAIGame({ avatar }) {
-    const p1Faction = avatar; // 'cat' 或 'dog'
-    const p2Faction = avatar === 'cat' ? 'dog' : 'cat';
+    this.myFaction = avatar; // 'cat' 或 'dog'
+    this.opponentFaction = avatar === 'cat' ? 'dog' : 'cat';
 
-    this.player1 = new Player(p1Faction);
-    this.player2 = new Player(p2Faction);
-    this.myFaction = p1Faction;
-    this.currentTurnFaction = p1Faction;
+    this.myPlayer = new Player(this.myFaction);
+    this.opponentPlayer = new Player(this.opponentFaction);
+    this.players = {
+      [this.myFaction]: this.myPlayer,
+      [this.opponentFaction]: this.opponentPlayer,
+    };
+    this.player1 = this.myPlayer;
+    this.player2 = this.opponentPlayer;
+    this.currentTurnFaction = this.myFaction;
 
-    this.hud.setupPlayers(this.player1, this.player2);
+    this.hud.setupPlayers(this.myPlayer, this.opponentPlayer);
     this.hud.updateTurnBadge(this.currentTurnFaction, this.gameMode, this.myFaction);
 
     this.board.generate();
@@ -114,7 +188,7 @@ class GameApp {
     // AI 對手獨立背景計時器，同時進行搶地與戰術技能施放
     this.aiSystem = new AISystem(
       this.board,
-      this.player2,
+      this.opponentPlayer,
       (targetTile, isCorrect) => this.handleAIMove(targetTile, isCorrect),
       this.aiDifficulty,
       (itemType, targetTile) => this.handleAIUseItem(itemType, targetTile)
@@ -128,15 +202,20 @@ class GameApp {
    * 雙人同機輪流對抗模式 (同一裝置交替作答)
    */
   setupHotseatGame({ avatar }) {
-    const p1Faction = avatar;
-    const p2Faction = avatar === 'cat' ? 'dog' : 'cat';
+    this.myFaction = avatar;
+    this.opponentFaction = avatar === 'cat' ? 'dog' : 'cat';
 
-    this.player1 = new Player(p1Faction);
-    this.player2 = new Player(p2Faction);
-    this.myFaction = p1Faction;
-    this.currentTurnFaction = p1Faction;
+    this.myPlayer = new Player(this.myFaction);
+    this.opponentPlayer = new Player(this.opponentFaction);
+    this.players = {
+      [this.myFaction]: this.myPlayer,
+      [this.opponentFaction]: this.opponentPlayer,
+    };
+    this.player1 = this.myPlayer;
+    this.player2 = this.opponentPlayer;
+    this.currentTurnFaction = this.myFaction;
 
-    this.hud.setupPlayers(this.player1, this.player2);
+    this.hud.setupPlayers(this.myPlayer, this.opponentPlayer);
     this.hud.updateTurnBadge(this.currentTurnFaction, this.gameMode, this.myFaction);
 
     this.board.generate();
@@ -155,19 +234,25 @@ class GameApp {
       this.aiSystem = null;
     }
 
+    this.isHost = isHost;
+    this.myFaction = avatar;
+    this.opponentFaction = avatar === 'cat' ? 'dog' : 'cat';
+
+    this.myPlayer = new Player(this.myFaction);
+    this.opponentPlayer = new Player(this.opponentFaction);
+    this.players = {
+      [this.myFaction]: this.myPlayer,
+      [this.opponentFaction]: this.opponentPlayer,
+    };
+    this.player1 = this.myPlayer;
+    this.player2 = this.opponentPlayer;
+
     this.roomManager.onMessageCallback = (msg) => this.handleNetworkMessage(msg);
     this.roomManager.onDisconnectedCallback = () => {
       this.hud.showCombatBanner('⚠️ 對手已中斷連線！', 'bomb', 6000);
     };
 
     if (isHost) {
-      const p1Faction = avatar;
-      const p2Faction = avatar === 'cat' ? 'dog' : 'cat';
-
-      this.player1 = new Player(p1Faction);
-      this.player2 = new Player(p2Faction);
-      this.myFaction = p1Faction;
-
       // 房主生成地盤結構
       this.board.generate();
 
@@ -175,25 +260,18 @@ class GameApp {
       this.roomManager.send({
         type: 'GAME_SYNC_START',
         tiles: this.board.exportTiles(),
-        hostFaction: p1Faction,
-        guestFaction: p2Faction,
+        hostFaction: this.myFaction,
+        guestFaction: this.opponentFaction,
       });
 
-      this.hud.setupPlayers(this.player1, this.player2);
+      this.hud.setupPlayers(this.myPlayer, this.opponentPlayer);
       this.hud.updateTurnBadge(this.myFaction, this.gameMode, this.myFaction);
       this.renderBoard();
       this.gameLoop.start(GAME_CONFIG.MATCH_DURATION_SECONDS);
 
       this.hud.showCombatBanner('⚡ 雙人即時對戰開始！雙方「同時搶地」，看誰搶得快！', 'golden', 4000);
     } else {
-      const p2Faction = avatar;
-      const p1Faction = avatar === 'cat' ? 'dog' : 'cat';
-
-      this.player1 = new Player(p1Faction);
-      this.player2 = new Player(p2Faction);
-      this.myFaction = p2Faction;
-
-      this.hud.setupPlayers(this.player1, this.player2);
+      this.hud.setupPlayers(this.myPlayer, this.opponentPlayer);
       this.hud.updateTurnBadge(this.myFaction, this.gameMode, this.myFaction);
       this.hud.showCombatBanner('🟢 連線成功！正在同步棋盤，即刻同時開搶...', 'info', 3000);
 
@@ -213,8 +291,8 @@ class GameApp {
           this.roomManager.send({
             type: 'GAME_SYNC_START',
             tiles: this.board.exportTiles(),
-            hostFaction: this.player1.factionId,
-            guestFaction: this.player2.factionId,
+            hostFaction: this.myFaction,
+            guestFaction: this.opponentFaction,
           });
         }
         break;
@@ -228,12 +306,21 @@ class GameApp {
           this.menu.hideMenu();
           this.audio.startBGM();
 
-          this.player1 = new Player(msg.hostFaction);
-          this.player2 = new Player(msg.guestFaction);
+          // 訪客陣營分配
           this.myFaction = msg.guestFaction;
+          this.opponentFaction = msg.hostFaction;
+
+          this.myPlayer = new Player(this.myFaction);
+          this.opponentPlayer = new Player(this.opponentFaction);
+          this.players = {
+            [this.myFaction]: this.myPlayer,
+            [this.opponentFaction]: this.opponentPlayer,
+          };
+          this.player1 = this.myPlayer;
+          this.player2 = this.opponentPlayer;
 
           this.board.importTiles(msg.tiles);
-          this.hud.setupPlayers(this.player1, this.player2);
+          this.hud.setupPlayers(this.myPlayer, this.opponentPlayer);
           this.hud.updateTurnBadge(this.myFaction, this.gameMode, this.myFaction);
           this.renderBoard();
 
@@ -253,53 +340,42 @@ class GameApp {
         break;
       }
 
-      // 對手完成作答 (更新地盤佔領與分數)
+      // 對手完成作答 (更新地盤佔領與精確分數同步)
       case 'TILE_CLAIM_RESOLVED': {
         const tile = this.board.tiles.find((t) => t.id === msg.tileId);
         if (!tile) return;
 
         tile.contestedBy = null;
-        const opponentPlayer = msg.factionId === this.player1.factionId ? this.player1 : this.player2;
-        const localPlayer = opponentPlayer === this.player1 ? this.player2 : this.player1;
+        const actor = this.players[msg.factionId];
+        const victim = this.players[msg.factionId === 'cat' ? 'dog' : 'cat'];
 
         if (msg.correct) {
           this.audio.playClaimTerritory();
-
-          // 若原本是我方地盤被對手反奪
-          if (tile.owner === localPlayer.factionId) {
-            localPlayer.loseTile(tile);
-          }
+          tile.owner = msg.factionId;
+          if (actor) actor.claimedTileIds.add(tile.id);
+          if (victim) victim.claimedTileIds.delete(tile.id);
 
           if (msg.isGolden) {
             tile.clearGoldenFlash();
-            opponentPlayer.addScore(tile.score * 2);
-            tile.owner = msg.factionId;
-            opponentPlayer.claimedTileIds.add(tile.id);
-            opponentPlayer.addItem('bomb');
             this.hud.showCombatBanner(`⚠️ 對手搶下了【🌟 黃金寶藏地盤】，獲得雙倍分數！`, 'golden', 3000);
-          } else {
-            opponentPlayer.claimTile(tile);
-            tile.owner = msg.factionId;
           }
-
           if (tile.difficulty < 5) tile.difficulty += 1;
-          opponentPlayer.addCombo();
         } else {
-          // 對手答錯扣分與冷卻
-          if (opponentPlayer.isShielded()) {
-            opponentPlayer.consumeShield();
-          } else {
-            const penalty = Math.max(
-              GAME_CONFIG.MIN_WRONG_PENALTY,
-              Math.round(tile.score * GAME_CONFIG.WRONG_PENALTY_RATIO)
-            );
-            opponentPlayer.deductScore(penalty);
-            tile.setCooldown(opponentPlayer.factionId, GAME_CONFIG.TILE_COOLDOWN_SECONDS);
-          }
-          opponentPlayer.resetCombo();
+          tile.setCooldown(msg.factionId, GAME_CONFIG.TILE_COOLDOWN_SECONDS);
         }
 
-        this.hud.updateStats(this.player1, this.player2);
+        // 權威數值同步，徹底根治分數不同步問題
+        if (typeof msg.actorScore === 'number' && actor) {
+          actor.score = msg.actorScore;
+        }
+        if (typeof msg.victimScore === 'number' && victim) {
+          victim.score = msg.victimScore;
+        }
+        if (typeof msg.actorCombo === 'number' && actor) {
+          actor.combo = msg.actorCombo;
+        }
+
+        this.hud.updateStats(this.myPlayer, this.opponentPlayer);
         this.renderBoard();
         break;
       }
@@ -310,7 +386,7 @@ class GameApp {
         break;
       }
 
-      // 訪客端同步計時器與黃金地盤
+      // 訪客端同步計時器與雙方分數
       case 'SYNC_TIMER': {
         if (!this.isHost) {
           this.hud.updateTimer(msg.seconds);
@@ -326,10 +402,28 @@ class GameApp {
             this.renderBoard();
           }
 
-          if (this.player1 && this.player2) {
-            this.hud.updateStatuses(this.player1, this.player2);
+          // 同步對手 (房主) 分數
+          if (typeof msg.hostScore === 'number') {
+            this.opponentPlayer.score = msg.hostScore;
+          }
+
+          if (this.myPlayer && this.opponentPlayer) {
+            this.hud.updateStats(this.myPlayer, this.opponentPlayer);
           }
         }
+        break;
+      }
+
+      // 對手投降退出本局
+      case 'REMOTE_SURRENDER': {
+        this.isGameOver = true;
+        this.gameLoop.stop();
+        this.quizModal.close();
+        this.audio.stopBGM();
+        this.hud.showCombatBanner('🚪 對手已選擇退出遊戲並返回主畫面！本局對戰結束。', 'bomb', 5000);
+        setTimeout(() => {
+          this.menu.showMenu();
+        }, 2500);
         break;
       }
 
@@ -344,8 +438,8 @@ class GameApp {
    * 應用線上對手施放的戰術道具
    */
   applyRemoteItemUsed(msg) {
-    const senderPlayer = msg.senderFaction === this.player1.factionId ? this.player1 : this.player2;
-    const targetPlayer = senderPlayer === this.player1 ? this.player2 : this.player1;
+    const senderPlayer = this.players[msg.senderFaction];
+    const targetPlayer = this.players[msg.senderFaction === 'cat' ? 'dog' : 'cat'];
 
     if (msg.itemType === 'freeze') {
       if (targetPlayer.isShielded()) {
@@ -379,7 +473,7 @@ class GameApp {
       this.hud.showCombatBanner(`🛡️ 對手啟動了【金鐘護盾】保護！`, 'info', 3000);
     }
 
-    this.hud.updateStats(this.player1, this.player2);
+    this.hud.updateStats(this.myPlayer, this.opponentPlayer);
     this.renderBoard();
   }
 
@@ -387,7 +481,6 @@ class GameApp {
    * 渲染棋盤：在雙人即時連線與電腦模式下，永遠高亮自身陣營可進攻之相鄰地盤！
    */
   renderBoard() {
-    // 若為同機輪流模式，以 currentTurnFaction 渲染；若為即時模式 (AI / 線上)，以自身控制的陣營渲染
     const activeFaction = this.gameMode === 'hotseat' ? this.currentTurnFaction : this.myFaction;
     this.board.render(activeFaction, (clickedTile) => {
       this.handleTileClick(clickedTile);
@@ -416,28 +509,31 @@ class GameApp {
       }
     }
 
-    // 限時黃金地盤倒數
-    const goldenTile = this.board.getGoldenTile();
+    // 更新倒數中黃金地盤
+    const goldenTile = this.board.getGoldenFlashTile();
     if (goldenTile) {
-      const expired = this.board.tickGoldenFlash();
-      if (expired) {
-        this.hud.showCombatBanner('⌛ 限時黃金地盤挑戰已結束，恢復為普通地盤！', 'info', 3000);
+      goldenTile.goldenTimeLeft -= 1;
+      if (goldenTile.goldenTimeLeft <= 0) {
+        this.board.clearGoldenFlash();
+        this.hud.showCombatBanner('⏳ 黃金寶藏地盤時限已過，恢復普通地盤！', 'info', 2500);
       }
       this.renderBoard();
     }
 
-    // 房主在線上模式時每秒向訪客廣播同步時鐘
+    // 房主在線上模式時每秒向訪客廣播同步時鐘與分數
     if (this.gameMode === 'online' && this.isHost) {
       this.roomManager.send({
         type: 'SYNC_TIMER',
         seconds: remainingSeconds,
         goldenTileId: goldenTile?.id || null,
         goldenTimeLeft: goldenTile?.goldenTimeLeft || 0,
+        hostScore: this.myPlayer.score,
+        guestScore: this.opponentPlayer.score,
       });
     }
 
-    if (this.player1 && this.player2) {
-      this.hud.updateStatuses(this.player1, this.player2);
+    if (this.myPlayer && this.opponentPlayer) {
+      this.hud.updateStatuses(this.myPlayer, this.opponentPlayer);
     }
   }
 
@@ -447,9 +543,8 @@ class GameApp {
   async handleTileClick(tile) {
     if (this.isGameOver || this.isAnsweringQuiz) return;
 
-    // 本身正在答題中
-    const actingPlayer = this.myFaction === this.player1.factionId ? this.player1 : this.player2;
-    const opponentPlayer = actingPlayer === this.player1 ? this.player2 : this.player1;
+    const actingPlayer = this.myPlayer;
+    const opponentPlayer = this.opponentPlayer;
 
     // 檢查玩家是否正處於被冰凍狀態
     if (actingPlayer.isFrozen()) {
@@ -545,7 +640,7 @@ class GameApp {
       actingPlayer.resetCombo();
     }
 
-    // 線上對抗即時同步結果給對方
+    // 線上對抗即時同步權威精確數值給對方
     if (this.gameMode === 'online') {
       this.roomManager.send({
         type: 'TILE_CLAIM_RESOLVED',
@@ -553,6 +648,11 @@ class GameApp {
         factionId: this.myFaction,
         correct: result.correct,
         isGolden: isGolden,
+        actorScore: actingPlayer.score,
+        actorTerritories: actingPlayer.getTerritoryCount(),
+        actorCombo: actingPlayer.combo,
+        victimScore: opponentPlayer.score,
+        victimTerritories: opponentPlayer.getTerritoryCount(),
       });
     }
 
@@ -562,7 +662,7 @@ class GameApp {
       this.myFaction = this.currentTurnFaction;
     }
 
-    this.hud.updateStats(this.player1, this.player2);
+    this.hud.updateStats(this.myPlayer, this.opponentPlayer);
     this.hud.updateTurnBadge(this.myFaction, this.gameMode, this.myFaction);
 
     this.isAnsweringQuiz = false;
@@ -575,8 +675,8 @@ class GameApp {
   handleItemUse(itemType) {
     if (this.isGameOver) return;
 
-    const myPlayer = this.myFaction === this.player1.factionId ? this.player1 : this.player2;
-    const opponentPlayer = myPlayer === this.player1 ? this.player2 : this.player1;
+    const myPlayer = this.myPlayer;
+    const opponentPlayer = this.opponentPlayer;
 
     if (myPlayer.isFrozen()) {
       this.hud.showCombatBanner('🧊 你當前正處於冰凍狀態，無法施放技能！', 'freeze', 2000);
@@ -638,7 +738,7 @@ class GameApp {
       this.hud.showCombatBanner('🛡️ 金鐘護盾啟動！25 秒內抵擋對手攻擊並免除下一次答錯倒扣！', 'info', 3500);
     }
 
-    this.hud.updateStats(this.player1, this.player2);
+    this.hud.updateStats(this.myPlayer, this.opponentPlayer);
     this.renderBoard();
   }
 
@@ -648,7 +748,7 @@ class GameApp {
   handleAIUseItem(itemType, targetTile) {
     if (this.isGameOver) return;
 
-    const humanPlayer = this.player1;
+    const humanPlayer = this.myPlayer;
 
     if (itemType === 'freeze') {
       if (humanPlayer.isShielded()) {
@@ -677,7 +777,7 @@ class GameApp {
       }
     }
 
-    this.hud.updateStats(this.player1, this.player2);
+    this.hud.updateStats(this.myPlayer, this.opponentPlayer);
     this.renderBoard();
   }
 
@@ -687,8 +787,8 @@ class GameApp {
   handleAIMove(targetTile, isCorrect) {
     if (this.isGameOver) return;
 
-    const aiPlayer = this.player2;
-    const humanPlayer = this.player1;
+    const aiPlayer = this.opponentPlayer;
+    const humanPlayer = this.myPlayer;
     const isGolden = targetTile.isGoldenFlash;
 
     if (isCorrect) {
@@ -721,7 +821,7 @@ class GameApp {
       targetTile.setCooldown(aiPlayer.factionId, GAME_CONFIG.TILE_COOLDOWN_SECONDS);
     }
 
-    this.hud.updateStats(this.player1, this.player2);
+    this.hud.updateStats(this.myPlayer, this.opponentPlayer);
     this.renderBoard();
   }
 
@@ -740,9 +840,9 @@ class GameApp {
 
     // 結算勝負 (1. 分數高者勝 ➔ 2. 地盤數多者勝 ➔ 3. 平手)
     this.menu.showGameOver({
-      p1: this.player1,
-      p2: this.player2,
-      p1IsCat: this.player1.factionId === 'cat',
+      p1: this.myPlayer,
+      p2: this.opponentPlayer,
+      p1IsCat: this.myPlayer.factionId === 'cat',
     });
   }
 }
