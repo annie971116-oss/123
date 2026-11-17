@@ -1,14 +1,14 @@
-import { GAME_CONFIG } from './config.js?v=2.6';
-import { questionManager } from './data/questions.js?v=2.6';
-import { AudioSystem } from './core/AudioSystem.js?v=2.6';
-import { GameLoop } from './core/GameLoop.js?v=2.6';
-import { RoomManager } from './systems/RoomManager.js?v=2.6';
-import { AISystem } from './systems/AISystem.js?v=2.6';
-import { Player } from './entities/Player.js?v=2.6';
-import { Board } from './entities/Board.js?v=2.6';
-import { HUD } from './ui/HUD.js?v=2.6';
-import { QuizModal } from './ui/QuizModal.js?v=2.6';
-import { Menu } from './ui/Menu.js?v=2.6';
+import { GAME_CONFIG } from './config.js?v=2.7';
+import { questionManager } from './data/questions.js?v=2.7';
+import { AudioSystem } from './core/AudioSystem.js?v=2.7';
+import { GameLoop } from './core/GameLoop.js?v=2.7';
+import { RoomManager } from './systems/RoomManager.js?v=2.7';
+import { AISystem } from './systems/AISystem.js?v=2.7';
+import { Player } from './entities/Player.js?v=2.7';
+import { Board } from './entities/Board.js?v=2.7';
+import { HUD } from './ui/HUD.js?v=2.7';
+import { QuizModal } from './ui/QuizModal.js?v=2.7';
+import { Menu } from './ui/Menu.js?v=2.7';
 
 /**
  * 貓狗大戰：常識地盤爭奪戰 - 主控制器 (Main Application Controller)
@@ -23,11 +23,7 @@ class GameApp {
 
     this.hud = new HUD({
       onItemClick: (itemType) => this.handleItemUse(itemType),
-      onReturnMenuClick: () => {
-        const qm = document.getElementById('quit-modal');
-        if (qm) qm.classList.remove('hidden');
-        else this.quitToMainMenu();
-      },
+      onReturnMenuClick: () => this.quitToMainMenu(),
     });
 
     this.boardEl = document.getElementById('game-board');
@@ -83,32 +79,23 @@ class GameApp {
   }
 
   /**
-   * 初始化「回到主畫面」按鈕與二次確認彈窗
+   * 初始化「回到主畫面」操作按鈕 (點擊直接結束遊戲回到主選單)
    */
   initQuitModal() {
     const btnQuitGame = document.getElementById('btn-return-menu') || document.getElementById('btn-quit-game');
-    const quitModal = document.getElementById('quit-modal');
-    const btnCancelQuit = document.getElementById('btn-cancel-quit');
+    if (btnQuitGame) {
+      btnQuitGame.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        this.audio.playClick();
+        this.quitToMainMenu();
+      });
+    }
+
     const btnConfirmQuit = document.getElementById('btn-confirm-quit');
-
-    if (btnQuitGame && quitModal) {
-      btnQuitGame.addEventListener('click', () => {
-        this.audio.playClick();
-        quitModal.classList.remove('hidden');
-      });
-    }
-
-    if (btnCancelQuit && quitModal) {
-      btnCancelQuit.addEventListener('click', () => {
-        this.audio.playClick();
-        quitModal.classList.add('hidden');
-      });
-    }
-
-    if (btnConfirmQuit && quitModal) {
+    if (btnConfirmQuit) {
       btnConfirmQuit.addEventListener('click', () => {
         this.audio.playClick();
-        quitModal.classList.add('hidden');
         this.quitToMainMenu();
       });
     }
@@ -139,6 +126,9 @@ class GameApp {
       } catch (e) {}
       this.roomManager.cleanup();
     }
+
+    const quitModal = document.getElementById('quit-modal');
+    if (quitModal) quitModal.classList.add('hidden');
 
     this.menu.showMenu();
   }
@@ -328,6 +318,7 @@ class GameApp {
           this.hud.setupPlayers(this.myPlayer, this.opponentPlayer);
           this.hud.updateTurnBadge(this.myFaction, this.gameMode, this.myFaction);
           this.renderBoard();
+          this.gameLoop.start(GAME_CONFIG.MATCH_DURATION_SECONDS);
 
           const factionName = this.myFaction === 'cat' ? '🐱 喵喵陣營' : '🐶 汪汪陣營';
           this.hud.showCombatBanner(`⚡ 棋盤同步完成！你是【${factionName}】，「同時搶地盤」全面開戰！`, 'golden', 4000);
@@ -581,7 +572,9 @@ class GameApp {
     }
 
     // 更新倒數中黃金地盤
-    const goldenTile = this.board.getGoldenFlashTile();
+    const goldenTile = (typeof this.board.getGoldenTile === 'function')
+      ? this.board.getGoldenTile()
+      : ((typeof this.board.getGoldenFlashTile === 'function') ? this.board.getGoldenFlashTile() : null);
     if (goldenTile) {
       goldenTile.goldenTimeLeft -= 1;
       if (goldenTile.goldenTimeLeft <= 0) {

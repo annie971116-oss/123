@@ -135,4 +135,22 @@ export class QuizModal {
       }
     }, isCorrect ? 1300 : 2200);
   }
+
+  /**
+   * 強制關閉作答彈窗 (用於提前結束本局對決)
+   */
+  close() {
+    if (this.timer) {
+      clearInterval(this.timer);
+      this.timer = null;
+    }
+    this.isAnswered = true;
+    if (this.modalEl) {
+      this.modalEl.classList.add('hidden');
+    }
+    if (this.currentResolve) {
+      this.currentResolve({ correct: false, targetTile: null });
+      this.currentResolve = null;
+    }
+  }
 }

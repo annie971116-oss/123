@@ -239,6 +239,10 @@ export class Board {
     return this.tiles.find((t) => t.isGoldenFlash) || null;
   }
 
+  getGoldenFlashTile() {
+    return this.getGoldenTile();
+  }
+
   clearGoldenFlash() {
     this.tiles.forEach((t) => {
       if (t.isGoldenFlash) t.clearGoldenFlash();
