@@ -23,6 +23,11 @@ class GameApp {
 
     this.hud = new HUD({
       onItemClick: (itemType) => this.handleItemUse(itemType),
+      onReturnMenuClick: () => {
+        const qm = document.getElementById('quit-modal');
+        if (qm) qm.classList.remove('hidden');
+        else this.quitToMainMenu();
+      },
     });
 
     this.boardEl = document.getElementById('game-board');
@@ -81,7 +86,7 @@ class GameApp {
    * 初始化「回到主畫面」按鈕與二次確認彈窗
    */
   initQuitModal() {
-    const btnQuitGame = document.getElementById('btn-quit-game');
+    const btnQuitGame = document.getElementById('btn-return-menu') || document.getElementById('btn-quit-game');
     const quitModal = document.getElementById('quit-modal');
     const btnCancelQuit = document.getElementById('btn-cancel-quit');
     const btnConfirmQuit = document.getElementById('btn-confirm-quit');
@@ -347,13 +352,26 @@ class GameApp {
 
         tile.contestedBy = null;
         const actor = this.players[msg.factionId];
-        const victim = this.players[msg.factionId === 'cat' ? 'dog' : 'cat'];
 
         if (msg.correct) {
           this.audio.playClaimTerritory();
           tile.owner = msg.factionId;
-          if (actor) actor.claimedTileIds.add(tile.id);
-          if (victim) victim.claimedTileIds.delete(tile.id);
+
+          if (actor) {
+            actor.claimedTileIds.add(tile.id);
+            if (typeof msg.actorScore === 'number') {
+              actor.score = msg.actorScore;
+            }
+            if (typeof msg.actorCombo === 'number') {
+              actor.combo = msg.actorCombo;
+            }
+          }
+
+          // 若對手搶佔的是我方的地盤，我方正式執行失地並即時廣播最新權威分數
+          if (msg.stolenFrom === this.myFaction) {
+            this.myPlayer.loseTile(tile);
+            this.broadcastMyState();
+          }
 
           if (msg.isGolden) {
             tile.clearGoldenFlash();
@@ -364,19 +382,21 @@ class GameApp {
           tile.setCooldown(msg.factionId, GAME_CONFIG.TILE_COOLDOWN_SECONDS);
         }
 
-        // 權威數值同步，徹底根治分數不同步問題
-        if (typeof msg.actorScore === 'number' && actor) {
-          actor.score = msg.actorScore;
-        }
-        if (typeof msg.victimScore === 'number' && victim) {
-          victim.score = msg.victimScore;
-        }
-        if (typeof msg.actorCombo === 'number' && actor) {
-          actor.combo = msg.actorCombo;
-        }
-
         this.hud.updateStats(this.myPlayer, this.opponentPlayer);
         this.renderBoard();
+        break;
+      }
+
+      // 接收專屬玩家狀態更新廣播 (即時分數、連勝、地盤清單)
+      case 'PLAYER_STATE_UPDATE': {
+        if (msg.factionId === this.opponentFaction) {
+          if (typeof msg.score === 'number') this.opponentPlayer.score = msg.score;
+          if (typeof msg.combo === 'number') this.opponentPlayer.combo = msg.combo;
+          if (Array.isArray(msg.claimedTileIds)) {
+            this.opponentPlayer.claimedTileIds = new Set(msg.claimedTileIds);
+          }
+          this.hud.updateStats(this.myPlayer, this.opponentPlayer);
+        }
         break;
       }
 
@@ -386,7 +406,7 @@ class GameApp {
         break;
       }
 
-      // 訪客端同步計時器與雙方分數
+      // 訪客端同步計時器與雙方分數 (房主權威時鐘)
       case 'SYNC_TIMER': {
         if (!this.isHost) {
           this.hud.updateTimer(msg.seconds);
@@ -402,10 +422,24 @@ class GameApp {
             this.renderBoard();
           }
 
-          // 同步對手 (房主) 分數
+          // 同步對手 (房主) 分數與狀態
           if (typeof msg.hostScore === 'number') {
             this.opponentPlayer.score = msg.hostScore;
           }
+          if (typeof msg.hostCombo === 'number') {
+            this.opponentPlayer.combo = msg.hostCombo;
+          }
+          if (Array.isArray(msg.hostClaimedTileIds)) {
+            this.opponentPlayer.claimedTileIds = new Set(msg.hostClaimedTileIds);
+          }
+
+          // 訪客立即回傳自身心跳分數給房主
+          this.roomManager.send({
+            type: 'GUEST_HEARTBEAT',
+            guestScore: this.myPlayer.score,
+            guestCombo: this.myPlayer.combo,
+            guestClaimedTileIds: Array.from(this.myPlayer.claimedTileIds),
+          });
 
           if (this.myPlayer && this.opponentPlayer) {
             this.hud.updateStats(this.myPlayer, this.opponentPlayer);
@@ -414,7 +448,26 @@ class GameApp {
         break;
       }
 
-      // 對手投降退出本局
+      // 房主接收訪客端雙向心跳分數
+      case 'GUEST_HEARTBEAT': {
+        if (this.isHost) {
+          if (typeof msg.guestScore === 'number') {
+            this.opponentPlayer.score = msg.guestScore;
+          }
+          if (typeof msg.guestCombo === 'number') {
+            this.opponentPlayer.combo = msg.guestCombo;
+          }
+          if (Array.isArray(msg.guestClaimedTileIds)) {
+            this.opponentPlayer.claimedTileIds = new Set(msg.guestClaimedTileIds);
+          }
+          if (this.myPlayer && this.opponentPlayer) {
+            this.hud.updateStats(this.myPlayer, this.opponentPlayer);
+          }
+        }
+        break;
+      }
+
+      // 對手投降或點擊退出回到主畫面
       case 'REMOTE_SURRENDER': {
         this.isGameOver = true;
         this.gameLoop.stop();
@@ -422,8 +475,9 @@ class GameApp {
         this.audio.stopBGM();
         this.hud.showCombatBanner('🚪 對手已選擇退出遊戲並返回主畫面！本局對戰結束。', 'bomb', 5000);
         setTimeout(() => {
+          this.roomManager.cleanup();
           this.menu.showMenu();
-        }, 2500);
+        }, 2000);
         break;
       }
 
@@ -432,6 +486,21 @@ class GameApp {
         break;
       }
     }
+  }
+
+  /**
+   * 廣播我方最新權威數值 (分數、連勝、地盤清單)
+   */
+  broadcastMyState() {
+    if (this.gameMode !== 'online') return;
+    this.roomManager.send({
+      type: 'PLAYER_STATE_UPDATE',
+      factionId: this.myFaction,
+      score: this.myPlayer.score,
+      combo: this.myPlayer.combo,
+      territories: this.myPlayer.getTerritoryCount(),
+      claimedTileIds: Array.from(this.myPlayer.claimedTileIds),
+    });
   }
 
   /**
@@ -457,6 +526,7 @@ class GameApp {
         targetPlayer.consumeShield();
         this.audio.playShield();
         this.hud.showCombatBanner('🛡️ 你的金鐘護盾擋下了對手的肉球轟炸！', 'info', 3000);
+        this.broadcastMyState();
       } else if (tile) {
         targetPlayer.loseTile(tile);
         this.board.neutralizeTile(tile);
@@ -466,6 +536,7 @@ class GameApp {
           'bomb',
           4000
         );
+        this.broadcastMyState();
       }
     } else if (msg.itemType === 'shield') {
       senderPlayer.shield(25);
@@ -528,7 +599,8 @@ class GameApp {
         goldenTileId: goldenTile?.id || null,
         goldenTimeLeft: goldenTile?.goldenTimeLeft || 0,
         hostScore: this.myPlayer.score,
-        guestScore: this.opponentPlayer.score,
+        hostCombo: this.myPlayer.combo,
+        hostClaimedTileIds: Array.from(this.myPlayer.claimedTileIds),
       });
     }
 
@@ -572,6 +644,7 @@ class GameApp {
     }
 
     const isGolden = tile.isGoldenFlash;
+    const previousOwner = tile.owner;
     const question = questionManager.getUniqueQuestion(tile.difficulty);
 
     // 彈出四選一常識作答彈窗
@@ -583,8 +656,8 @@ class GameApp {
     if (result.correct) {
       this.audio.playClaimTerritory();
 
-      // 若該地盤已被對手佔領，先扣除對手該地盤分數與數量 (反奪機制)
-      if (tile.owner === opponentPlayer.factionId) {
+      // 本地或同機模式若為反奪地盤，扣除對手該地盤
+      if (this.gameMode !== 'online' && tile.owner === opponentPlayer.factionId) {
         opponentPlayer.loseTile(tile);
       }
 
@@ -640,7 +713,7 @@ class GameApp {
       actingPlayer.resetCombo();
     }
 
-    // 線上對抗即時同步權威精確數值給對方
+    // 線上對抗即時同步權威精確數值給對方 (各端僅對自身分數享有權威)
     if (this.gameMode === 'online') {
       this.roomManager.send({
         type: 'TILE_CLAIM_RESOLVED',
@@ -648,12 +721,13 @@ class GameApp {
         factionId: this.myFaction,
         correct: result.correct,
         isGolden: isGolden,
+        stolenFrom: (result.correct && previousOwner === this.opponentFaction) ? this.opponentFaction : null,
         actorScore: actingPlayer.score,
         actorTerritories: actingPlayer.getTerritoryCount(),
         actorCombo: actingPlayer.combo,
-        victimScore: opponentPlayer.score,
-        victimTerritories: opponentPlayer.getTerritoryCount(),
+        actorClaimedTileIds: Array.from(actingPlayer.claimedTileIds),
       });
+      this.broadcastMyState();
     }
 
     // 同機模式下輪替行動
@@ -738,6 +812,7 @@ class GameApp {
       this.hud.showCombatBanner('🛡️ 金鐘護盾啟動！25 秒內抵擋對手攻擊並免除下一次答錯倒扣！', 'info', 3500);
     }
 
+    this.broadcastMyState();
     this.hud.updateStats(this.myPlayer, this.opponentPlayer);
     this.renderBoard();
   }

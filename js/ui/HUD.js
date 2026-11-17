@@ -5,8 +5,9 @@ import { GAME_CONFIG } from '../config.js';
  * 負責我方資訊、對手資訊、5:00 倒數計時器、戰況即時快訊橫幅與戰術道具欄 UI
  */
 export class HUD {
-  constructor({ onItemClick = () => {} } = {}) {
+  constructor({ onItemClick = () => {}, onReturnMenuClick = () => {} } = {}) {
     this.onItemClick = onItemClick;
+    this.onReturnMenuClick = onReturnMenuClick;
 
     this.timerEl = document.getElementById('hud-timer');
     this.turnBadgeEl = document.getElementById('hud-turn-badge');
@@ -57,45 +58,43 @@ export class HUD {
     if (this.btnShield) {
       this.btnShield.addEventListener('click', () => this.onItemClick('shield'));
     }
+
+    this.btnReturnMenu = document.getElementById('btn-return-menu');
+    if (this.btnReturnMenu) {
+      this.btnReturnMenu.addEventListener('click', () => this.onReturnMenuClick());
+    }
   }
 
   /**
    * 初始化雙方身分與頭像名稱
-   * 左上角 (p1) 永遠代表我方，右上角 (p2) 永遠代表對手
    */
-  setupPlayers(myPlayer, opponentPlayer) {
-    this.myPlayer = myPlayer;
-    this.opponentPlayer = opponentPlayer;
+  setupPlayers(player1, player2) {
+    if (this.p1AvatarEl) this.p1AvatarEl.textContent = player1.faction.avatar;
+    if (this.p1NameEl) this.p1NameEl.textContent = player1.faction.name;
 
-    if (this.p1AvatarEl) this.p1AvatarEl.textContent = myPlayer.faction.avatar;
-    if (this.p1NameEl) this.p1NameEl.textContent = `我方 (${myPlayer.faction.name})`;
+    if (this.p2AvatarEl) this.p2AvatarEl.textContent = player2.faction.avatar;
+    if (this.p2NameEl) this.p2NameEl.textContent = player2.faction.name;
 
-    if (this.p2AvatarEl) this.p2AvatarEl.textContent = opponentPlayer.faction.avatar;
-    if (this.p2NameEl) this.p2NameEl.textContent = `對手 (${opponentPlayer.faction.name})`;
-
-    this.updateStats(myPlayer, opponentPlayer);
-    this.updateItemCounts(myPlayer);
+    this.updateStats(player1, player2);
+    this.updateItemCounts(player1);
   }
 
   /**
    * 即時更新雙方得分、地盤數與道具
-   * myPlayer 永遠更新左上角，opponentPlayer 永遠更新右上角
    */
-  updateStats(myPlayer, opponentPlayer) {
-    if (!myPlayer || !opponentPlayer) return;
+  updateStats(p1, p2) {
+    if (this.p1ScoreEl) this.p1ScoreEl.textContent = `${p1.score} 分`;
+    if (this.p1TerritoryEl) this.p1TerritoryEl.textContent = `${p1.getTerritoryCount()} 塊`;
 
-    if (this.p1ScoreEl) this.p1ScoreEl.textContent = `${myPlayer.score} 分`;
-    if (this.p1TerritoryEl) this.p1TerritoryEl.textContent = `${myPlayer.getTerritoryCount()} 塊`;
+    if (this.p2ScoreEl) this.p2ScoreEl.textContent = `${p2.score} 分`;
+    if (this.p2TerritoryEl) this.p2TerritoryEl.textContent = `${p2.getTerritoryCount()} 塊`;
 
-    if (this.p2ScoreEl) this.p2ScoreEl.textContent = `${opponentPlayer.score} 分`;
-    if (this.p2TerritoryEl) this.p2TerritoryEl.textContent = `${opponentPlayer.getTerritoryCount()} 塊`;
-
-    this.updateItemCounts(myPlayer);
-    this.updateStatuses(myPlayer, opponentPlayer);
+    this.updateItemCounts(p1);
+    this.updateStatuses(p1, p2);
   }
 
   /**
-   * 更新道具數量顯示 (針對我方)
+   * 更新道具數量顯示
    */
   updateItemCounts(player) {
     if (!player || !player.items) return;
@@ -112,26 +111,24 @@ export class HUD {
   /**
    * 更新玩家異常狀態標籤 (冰凍、護盾)
    */
-  updateStatuses(myPlayer, opponentPlayer) {
-    if (!myPlayer || !opponentPlayer) return;
+  updateStatuses(p1, p2) {
+    this.renderSinglePlayerStatus(p1, this.p1CardEl, this.p1StatusEl);
+    this.renderSinglePlayerStatus(p2, this.p2CardEl, this.p2StatusEl);
 
-    this.renderSinglePlayerStatus(myPlayer, this.p1CardEl, this.p1StatusEl);
-    this.renderSinglePlayerStatus(opponentPlayer, this.p2CardEl, this.p2StatusEl);
-
-    // 連勝徽章 (以我方為主)
+    // 連勝徽章
     if (this.comboBadgeEl) {
-      if (myPlayer.combo >= 2) {
-        this.comboBadgeEl.textContent = `🔥 ${myPlayer.combo} 連勝！`;
+      if (p1.combo >= 2) {
+        this.comboBadgeEl.textContent = `🔥 ${p1.combo} 連勝！`;
         this.comboBadgeEl.classList.remove('hidden');
       } else {
         this.comboBadgeEl.classList.add('hidden');
       }
     }
 
-    // 狂熱時間徽章 (以我方為主)
+    // 狂熱時間徽章
     if (this.feverBadgeEl) {
-      if (myPlayer.isFeverActive()) {
-        const remaining = Math.ceil((myPlayer.feverUntil - Date.now()) / 1000);
+      if (p1.isFeverActive()) {
+        const remaining = Math.ceil((p1.feverUntil - Date.now()) / 1000);
         this.feverBadgeEl.textContent = `⚡ 狂熱中 +50% 分數 (${remaining}s)！`;
         this.feverBadgeEl.classList.remove('hidden');
       } else {

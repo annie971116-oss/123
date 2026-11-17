@@ -190,7 +190,7 @@
         <div id="hud-turn-badge" class="turn-pill pill-active">
           🎯 點擊相鄰方格搶攻地盤！
         </div>
-        <button id="btn-quit-game" class="btn-quit-game" title="結束本局並返回主畫面">
+        <button id="btn-return-menu" class="btn-return-menu" title="結束本局並返回主畫面">
           🏠 回到主畫面
         </button>
       </div>
@@ -286,15 +286,22 @@
     </div>
   </div>
 
-  <!-- ================= 放棄/返回主畫面確認彈窗 ================= -->
+  <!-- ================= 退出對戰確認彈窗 (Quit Modal) ================= -->
   <div id="quit-modal" class="modal-overlay hidden">
-    <div class="quit-card pop-in">
-      <div class="quit-icon">🚪</div>
-      <h2 class="quit-title">要回到主畫面嗎？</h2>
-      <p class="quit-desc">若現在返回主畫面，本局遊戲將會直接結束喔！</p>
-      <div class="quit-actions">
-        <button id="btn-cancel-quit" class="btn-action btn-cancel">繼續遊戲 🐾</button>
-        <button id="btn-confirm-quit" class="btn-action btn-confirm-quit">確認退出 🏠</button>
+    <div class="gameover-card pop-in" style="max-width: 420px; text-align: center;">
+      <div class="winner-trophy" style="font-size: 46px;">🚪</div>
+      <h2 class="winner-title" style="font-size: 24px; margin-bottom: 8px;">確定要回到主畫面嗎？</h2>
+      <p class="winner-reason" style="margin-bottom: 24px; color: var(--text-muted);">
+        結束當前對戰後，本局搶地盤進度將直接中止並返回模式選擇選單。
+      </p>
+
+      <div style="display: flex; gap: 12px; justify-content: center;">
+        <button id="btn-cancel-quit" class="btn-action btn-copy" style="flex: 1; padding: 12px 18px;">
+          🐾 繼續戰局
+        </button>
+        <button id="btn-confirm-quit" class="btn-action" style="flex: 1; padding: 12px 18px; background: linear-gradient(135deg, #FF4D4F 0%, #CF1322 100%); color: #fff; box-shadow: 0 6px 16px rgba(207, 19, 34, 0.35);">
+          🚪 結束本局
+        </button>
       </div>
     </div>
   </div>
