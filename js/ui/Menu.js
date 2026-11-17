@@ -1,6 +1,8 @@
+import { GAME_CONFIG } from '../config.js';
+
 /**
  * 主畫面與選單控制器 (Menu UI)
- * 負責模式選擇（電腦對抗 / 雙人線上即時連線 / 雙人同機輪流）、形象選擇、音量控制與即時房間配對
+ * 負責模式選擇、關卡主題選擇、電腦強度、形象選擇、音量控制與即時房間配對
  */
 export class Menu {
   constructor({ audioSystem, roomManager, onStartGame }) {
@@ -15,6 +17,7 @@ export class Menu {
 
     // 步驟區塊
     this.stepMode = document.getElementById('menu-step-mode');
+    this.stepStage = document.getElementById('menu-step-stage');
     this.stepAIDiff = document.getElementById('menu-step-ai-diff');
     this.stepRoom = document.getElementById('menu-step-room');
     this.stepAvatar = document.getElementById('menu-step-avatar');
@@ -30,9 +33,11 @@ export class Menu {
     this.btnJoinRoom = document.getElementById('btn-join-room');
     this.hostStatusEl = document.getElementById('host-connection-status');
     this.joinStatusEl = document.getElementById('join-connection-status');
+    this.roomStageDisplay = document.getElementById('room-stage-theme-display');
 
     // 當前選擇設定
     this.selectedMode = 'ai'; // 'ai' | 'online' | 'hotseat'
+    this.selectedStage = 'all'; // 'all' | 'life' | 'nature' | 'world' | 'anime' | 'food'
     this.selectedAIDifficulty = 'normal'; // 'easy' | 'normal' | 'hard'
     this.selectedAvatar = 'cat'; // 'cat' | 'dog'
     this.roomCode = '';
@@ -61,7 +66,7 @@ export class Menu {
       });
     }
 
-    // 2. 模式選擇按鈕
+    // 2. 模式選擇按鈕 (下一步皆進入「關卡主題選擇」)
     const btnModeAI = document.getElementById('btn-mode-ai');
     const btnModeOnline = document.getElementById('btn-mode-online');
     const btnModeHotseat = document.getElementById('btn-mode-hotseat');
@@ -70,7 +75,7 @@ export class Menu {
       btnModeAI.addEventListener('click', () => {
         this.audio.playClick();
         this.selectedMode = 'ai';
-        this.goToStep('ai-diff');
+        this.goToStep('stage');
       });
     }
 
@@ -78,8 +83,7 @@ export class Menu {
       btnModeOnline.addEventListener('click', () => {
         this.audio.playClick();
         this.selectedMode = 'online';
-        this.setupOnlineRoomStep();
-        this.goToStep('room');
+        this.goToStep('stage');
       });
     }
 
@@ -87,11 +91,46 @@ export class Menu {
       btnModeHotseat.addEventListener('click', () => {
         this.audio.playClick();
         this.selectedMode = 'hotseat';
-        this.goToStep('avatar');
+        this.goToStep('stage');
       });
     }
 
-    // 3. 電腦強度選擇按鈕
+    // 3. 關卡主題選擇卡片
+    const stageCards = document.querySelectorAll('.stage-card');
+    stageCards.forEach((card) => {
+      card.addEventListener('click', () => {
+        this.audio.playClick();
+        stageCards.forEach((c) => c.classList.remove('selected'));
+        card.classList.add('selected');
+        this.selectedStage = card.dataset.stage || 'all';
+      });
+    });
+
+    const btnStageBack = document.getElementById('btn-stage-back');
+    const btnStageNext = document.getElementById('btn-stage-next');
+
+    if (btnStageBack) {
+      btnStageBack.addEventListener('click', () => {
+        this.audio.playClick();
+        this.goToStep('mode');
+      });
+    }
+
+    if (btnStageNext) {
+      btnStageNext.addEventListener('click', () => {
+        this.audio.playClick();
+        if (this.selectedMode === 'ai') {
+          this.goToStep('ai-diff');
+        } else if (this.selectedMode === 'online') {
+          this.setupOnlineRoomStep();
+          this.goToStep('room');
+        } else {
+          this.goToStep('avatar');
+        }
+      });
+    }
+
+    // 4. 電腦強度選擇按鈕 (單人模式專屬)
     const diffCards = document.querySelectorAll('.ai-diff-card');
     diffCards.forEach((card) => {
       card.addEventListener('click', () => {
@@ -108,7 +147,7 @@ export class Menu {
     if (btnAIDiffBack) {
       btnAIDiffBack.addEventListener('click', () => {
         this.audio.playClick();
-        this.goToStep('mode');
+        this.goToStep('stage');
       });
     }
 
@@ -119,7 +158,7 @@ export class Menu {
       });
     }
 
-    // 4. 線上房間代碼複製按鈕
+    // 5. 線上房間代碼複製按鈕
     if (this.btnCopyCode) {
       this.btnCopyCode.addEventListener('click', async () => {
         this.audio.playClick();
@@ -131,7 +170,7 @@ export class Menu {
       });
     }
 
-    // 5. 訪客輸入代碼並加入按鈕
+    // 6. 訪客輸入代碼並加入按鈕
     if (this.btnJoinRoom) {
       this.btnJoinRoom.addEventListener('click', () => {
         this.audio.playClick();
@@ -144,13 +183,14 @@ export class Menu {
       btnRoomBack.addEventListener('click', () => {
         this.audio.playClick();
         this.roomManager.cleanup();
-        this.goToStep('mode');
+        this.goToStep('stage');
       });
     }
 
-    // 6. 形象選擇按鈕 (貓或狗)
+    // 7. 形象選擇按鈕 (貓或狗)
     const btnChooseCat = document.getElementById('btn-choose-cat');
     const btnChooseDog = document.getElementById('btn-choose-dog');
+    const btnAvatarBack = document.getElementById('btn-avatar-back');
     const btnStartGame = document.getElementById('btn-start-game');
 
     if (btnChooseCat) {
@@ -171,6 +211,19 @@ export class Menu {
       });
     }
 
+    if (btnAvatarBack) {
+      btnAvatarBack.addEventListener('click', () => {
+        this.audio.playClick();
+        if (this.selectedMode === 'ai') {
+          this.goToStep('ai-diff');
+        } else if (this.selectedMode === 'online') {
+          this.goToStep('room');
+        } else {
+          this.goToStep('stage');
+        }
+      });
+    }
+
     if (btnStartGame) {
       btnStartGame.addEventListener('click', () => {
         this.audio.playClick();
@@ -178,6 +231,7 @@ export class Menu {
         this.hideMenu();
         this.onStartGame({
           mode: this.selectedMode,
+          stage: this.selectedStage,
           aiDifficulty: this.selectedAIDifficulty,
           avatar: this.selectedAvatar,
           roomCode: this.roomCode,
@@ -186,7 +240,7 @@ export class Menu {
       });
     }
 
-    // 7. 結算畫面重新開始按鈕
+    // 8. 結算畫面重新開始按鈕
     const btnRestartGame = document.getElementById('btn-restart-game');
     if (btnRestartGame) {
       btnRestartGame.addEventListener('click', () => {
@@ -225,6 +279,11 @@ export class Menu {
     this.roomCode = this.roomManager.generateRoomCode();
     if (this.roomCodeDisplay) this.roomCodeDisplay.textContent = this.roomCode;
 
+    const theme = GAME_CONFIG.THEMES[this.selectedStage] || GAME_CONFIG.THEMES.all;
+    if (this.roomStageDisplay) {
+      this.roomStageDisplay.innerHTML = `🎯 已選定關卡主題：<strong>${theme.icon} ${theme.name}</strong>`;
+    }
+
     if (this.hostStatusEl) {
       this.hostStatusEl.className = 'room-status-badge waiting';
       this.hostStatusEl.textContent = '⏳ 正在等待好友輸入代碼加入...（請將代碼傳給對方）';
@@ -242,10 +301,9 @@ export class Menu {
           this.hostStatusEl.className = 'room-status-badge connected';
           this.hostStatusEl.textContent = '🟢 好友已成功連線！即將選擇形象進入戰局...';
         }
-        // 1.5 秒後自動推進至形象選擇
         setTimeout(() => {
           this.goToStep('avatar');
-        }, 1500);
+        }, 1200);
       },
       onError: (err) => {
         console.warn('Host error:', err);
@@ -277,7 +335,6 @@ export class Menu {
       this.joinStatusEl.classList.remove('hidden');
     }
 
-    // 超時檢測 (10 秒內未連上顯示提示)
     if (this.joinTimeoutTimer) clearTimeout(this.joinTimeoutTimer);
     this.joinTimeoutTimer = setTimeout(() => {
       if (!this.roomManager.isConnected) {
@@ -287,12 +344,11 @@ export class Menu {
         }
         if (this.joinStatusEl) {
           this.joinStatusEl.className = 'room-status-badge error';
-          this.joinStatusEl.textContent = `❌ 無法配對房間【${code}】！請確認房主已在房間中等待，並檢查代碼大小寫是否正確。`;
+          this.joinStatusEl.textContent = `❌ 無法配對房間【${code}】！請確認房主已在房間中等待，並檢查代碼是否正確。`;
         }
       }
     }, 10000);
 
-    // 執行加入連線
     this.roomManager.joinRoom(code, {
       onConnected: () => {
         if (this.joinTimeoutTimer) clearTimeout(this.joinTimeoutTimer);
@@ -306,7 +362,6 @@ export class Menu {
           this.joinStatusEl.textContent = `🟢 已成功連線至房主！等待房主開啟戰局...`;
         }
 
-        // 訪客自動跳轉至準備戰局
         setTimeout(() => {
           this.goToStep('avatar');
         }, 1200);
@@ -327,11 +382,13 @@ export class Menu {
 
   goToStep(stepName) {
     this.stepMode?.classList.add('hidden');
+    this.stepStage?.classList.add('hidden');
     this.stepAIDiff?.classList.add('hidden');
     this.stepRoom?.classList.add('hidden');
     this.stepAvatar?.classList.add('hidden');
 
     if (stepName === 'mode') this.stepMode?.classList.remove('hidden');
+    if (stepName === 'stage') this.stepStage?.classList.remove('hidden');
     if (stepName === 'ai-diff') this.stepAIDiff?.classList.remove('hidden');
     if (stepName === 'room') this.stepRoom?.classList.remove('hidden');
     if (stepName === 'avatar') this.stepAvatar?.classList.remove('hidden');
@@ -350,7 +407,7 @@ export class Menu {
 
   /**
    * 顯示五分鐘計時結束結算畫面
-   * 判定順序：總得分高者勝 ➔ 地盤數多者勝 ➔ 平手
+   * 純以 50 格地盤佔領總數判定勝負：地盤多者勝 ➔ 平手
    */
   showGameOver({ p1, p2, p1IsCat }) {
     if (!this.gameOverModal) return;
@@ -362,31 +419,27 @@ export class Menu {
     const winnerReasonEl = document.getElementById('result-reason');
     const statsDetailEl = document.getElementById('result-stats-detail');
 
+    const p1Count = p1.getTerritoryCount();
+    const p2Count = p2.getTerritoryCount();
+    const totalContestable = 48; // 總可佔領地盤數
+
     let winner = null;
     let reasonText = '';
 
-    if (p1.score > p2.score) {
+    if (p1Count > p2Count) {
       winner = p1;
-      reasonText = `總分領先！${p1.faction.name} 奪得最高榮耀！`;
-    } else if (p2.score > p1.score) {
+      reasonText = `領地稱霸！${p1.faction.name} 奪得 ${p1Count} 塊地盤，贏得最終勝利！`;
+    } else if (p2Count > p1Count) {
       winner = p2;
-      reasonText = `總分領先！${p2.faction.name} 稱霸棋盤！`;
+      reasonText = `領地稱霸！${p2.faction.name} 奪得 ${p2Count} 塊地盤，贏得最終勝利！`;
     } else {
-      if (p1.getTerritoryCount() > p2.getTerritoryCount()) {
-        winner = p1;
-        reasonText = `分數同分，但佔領地盤更多！${p1.faction.name} 險勝！`;
-      } else if (p2.getTerritoryCount() > p1.getTerritoryCount()) {
-        winner = p2;
-        reasonText = `分數同分，但佔領地盤更多！${p2.faction.name} 險勝！`;
-      } else {
-        winner = null;
-        reasonText = '雙方分數與地盤數完全相同，平分秋色！世紀平手！';
-      }
+      winner = null;
+      reasonText = `雙方各佔領 ${p1Count} 塊地盤，勢均力敵，世紀平手！`;
     }
 
     if (winner) {
       if (winnerIconEl) winnerIconEl.textContent = '👑';
-      if (winnerTitleEl) winnerTitleEl.textContent = `🎉 恭喜【${winner.faction.name}】大獲全勝！`;
+      if (winnerTitleEl) winnerTitleEl.textContent = `🎉 恭喜【${winner.faction.name}】稱霸地盤！`;
     } else {
       if (winnerIconEl) winnerIconEl.textContent = '🤝';
       if (winnerTitleEl) winnerTitleEl.textContent = '🐾 勢均力敵！握手言和！';
@@ -394,20 +447,23 @@ export class Menu {
 
     if (winnerReasonEl) winnerReasonEl.textContent = reasonText;
 
+    const p1Percent = Math.round((p1Count / totalContestable) * 100);
+    const p2Percent = Math.round((p2Count / totalContestable) * 100);
+
     if (statsDetailEl) {
       statsDetailEl.innerHTML = `
         <div class="result-player-card">
           <div class="rp-avatar">${p1.faction.avatar}</div>
           <div class="rp-name">${p1.faction.name}</div>
-          <div class="rp-score">⭐ 得分：<strong>${p1.score}</strong> 分</div>
-          <div class="rp-count">🚩 地盤數：<strong>${p1.getTerritoryCount()}</strong> 塊</div>
+          <div class="rp-count">🚩 佔領地盤：<strong>${p1Count}</strong> / ${totalContestable} 塊</div>
+          <div class="rp-score">📊 地盤佔比：<strong>${p1Percent}%</strong></div>
         </div>
         <div class="result-vs">VS</div>
         <div class="result-player-card">
           <div class="rp-avatar">${p2.faction.avatar}</div>
           <div class="rp-name">${p2.faction.name}</div>
-          <div class="rp-score">⭐ 得分：<strong>${p2.score}</strong> 分</div>
-          <div class="rp-count">🚩 地盤數：<strong>${p2.getTerritoryCount()}</strong> 塊</div>
+          <div class="rp-count">🚩 佔領地盤：<strong>${p2Count}</strong> / ${totalContestable} 塊</div>
+          <div class="rp-score">📊 地盤佔比：<strong>${p2Percent}%</strong></div>
         </div>
       `;
     }

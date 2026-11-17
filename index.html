@@ -11,7 +11,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Fredoka:wght@500;600;700&family=Nunito:wght@600;700;800&display=swap" rel="stylesheet">
   <!-- P2P WebRTC 跨裝置即時連線函式庫 (PeerJS) -->
   <script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js"></script>
-  <link rel="stylesheet" href="css/style.css?v=2.7">
+  <link rel="stylesheet" href="css/style.css?v=3.0">
 </head>
 <body>
 
@@ -30,7 +30,7 @@
           <span class="logo-pet bounce-slow-rev">🐶</span>
         </div>
         <h1 class="game-title">貓狗大戰</h1>
-        <p class="game-subtitle">🐾 常識地盤爭奪戰・5分鐘限時益智對決 🐾</p>
+        <p class="game-subtitle">🐾 50格地盤爭奪戰・六大主題關卡・5分鐘限時對決 🐾</p>
       </div>
 
       <!-- 步驟 1: 模式選擇 -->
@@ -66,9 +66,80 @@
         </div>
       </div>
 
-      <!-- 步驟 1-A: 電腦強度選擇 (單人模式專屬) -->
+      <!-- 步驟 2: 關卡主題選擇 -->
+      <div id="menu-step-stage" class="menu-step hidden">
+        <h2 class="step-heading">【步驟 2】請選擇挑戰關卡主題</h2>
+        <div class="stage-cards-grid">
+          <div class="stage-card" data-stage="life">
+            <div class="stage-icon">🌿</div>
+            <div class="stage-info">
+              <div class="stage-title">生活常識館</div>
+              <div class="stage-sub">居家生活・健康衛生・日常智慧</div>
+              <p class="stage-desc">洗手五步驟、生活冷知識與健康衛生大考驗！</p>
+            </div>
+            <div class="stage-badge">50道精選題</div>
+          </div>
+
+          <div class="stage-card" data-stage="nature">
+            <div class="stage-icon">🔬</div>
+            <div class="stage-info">
+              <div class="stage-title">自然科學殿堂</div>
+              <div class="stage-sub">可愛動物・宇宙星空・自然奧秘</div>
+              <p class="stage-desc">貓狗趣味習性、神奇大自然、天文與物理現象！</p>
+            </div>
+            <div class="stage-badge">50道精選題</div>
+          </div>
+
+          <div class="stage-card" data-stage="world">
+            <div class="stage-icon">🗺️</div>
+            <div class="stage-info">
+              <div class="stage-title">環遊世界地理</div>
+              <div class="stage-sub">各國名勝・世界地標・地理風情</div>
+              <p class="stage-desc">世界名勝古蹟、名城地標與各國地理大百科！</p>
+            </div>
+            <div class="stage-badge">50道精選題</div>
+          </div>
+
+          <div class="stage-card" data-stage="anime">
+            <div class="stage-icon">🎬</div>
+            <div class="stage-info">
+              <div class="stage-title">動漫娛樂小鎮</div>
+              <div class="stage-sub">童話故事・經典動漫・影視角色</div>
+              <p class="stage-desc">人氣卡通明星、經典動漫名作與童話奇幻世界！</p>
+            </div>
+            <div class="stage-badge">50道精選題</div>
+          </div>
+
+          <div class="stage-card" data-stage="food">
+            <div class="stage-icon">🍔</div>
+            <div class="stage-info">
+              <div class="stage-title">吃貨美食天地</div>
+              <div class="stage-sub">美味小吃・甜點飲料・料理文化</div>
+              <p class="stage-desc">夜市必吃小吃、甜點飲品由來與各國特色美食！</p>
+            </div>
+            <div class="stage-badge">50道精選題</div>
+          </div>
+
+          <div class="stage-card selected" data-stage="all">
+            <div class="stage-icon">👑</div>
+            <div class="stage-info">
+              <div class="stage-title">全能知識王擂台</div>
+              <div class="stage-sub">五大領域跨界綜合大擂台</div>
+              <p class="stage-desc">全方位匯集 250 道題庫，五大領域隨機快問快答！</p>
+            </div>
+            <div class="stage-badge highlight">250題全收錄</div>
+          </div>
+        </div>
+
+        <div class="step-actions">
+          <button id="btn-stage-back" class="btn-action btn-copy">⬅ 返回重選模式</button>
+          <button id="btn-stage-next" class="btn-action btn-primary">下一步：確認關卡 ➔</button>
+        </div>
+      </div>
+
+      <!-- 步驟 3-A: 電腦強度選擇 (單人模式專屬) -->
       <div id="menu-step-ai-diff" class="menu-step hidden">
-        <h2 class="step-heading">【步驟 2】請選擇電腦對手難度強度</h2>
+        <h2 class="step-heading">【步驟 3】請選擇電腦對手難度強度</h2>
         <div class="ai-diff-grid">
           <div id="btn-ai-easy" class="ai-diff-card card-diff-easy" data-diff="easy">
             <div class="diff-icon">🌱</div>
@@ -87,23 +158,26 @@
           <div id="btn-ai-hard" class="ai-diff-card card-diff-hard" data-diff="hard">
             <div class="diff-icon">🔥</div>
             <div class="diff-title">🔴 戰神霸王 (困難)</div>
-            <div class="diff-desc">極速出招 (2~4秒)，答題神準！專門搶奪 70~100 分大塊地盤！</div>
+            <div class="diff-desc">極速出招 (2~4秒)，答題神準！主動搶奪並封鎖前進路線！</div>
             <div class="diff-check">✔ 已選取</div>
           </div>
         </div>
 
         <div class="step-actions">
-          <button id="btn-ai-diff-back" class="btn-action btn-copy">⬅ 返回重選模式</button>
+          <button id="btn-ai-diff-back" class="btn-action btn-copy">⬅ 返回重選關卡</button>
           <button id="btn-ai-diff-next" class="btn-action btn-primary">下一步：選擇形象 ➔</button>
         </div>
       </div>
 
-      <!-- 步驟 1-B: 雙人線上房間連線配對 -->
+      <!-- 步驟 3-B: 雙人線上房間連線配對 -->
       <div id="menu-step-room" class="menu-step hidden">
         <h2 class="step-heading">【雙人線上連線】房間代碼配對</h2>
         <div class="room-action-wrap">
           <!-- 房主創建區 -->
           <div class="room-box">
+            <div id="room-stage-theme-display" class="room-stage-pill">
+              🎯 已選定關卡主題：👑 全能知識王擂台
+            </div>
             <div class="room-label">👑 您的專屬房間邀請代碼：</div>
             <div id="room-code-display" class="room-code-badge">------</div>
             <button id="btn-copy-code" class="btn-action btn-copy">📋 複製邀請代碼與連結</button>
@@ -124,14 +198,14 @@
           </div>
 
           <div class="step-actions">
-            <button id="btn-room-back" class="btn-action btn-copy">⬅ 返回重選模式</button>
+            <button id="btn-room-back" class="btn-action btn-copy">⬅ 返回重選關卡</button>
           </div>
         </div>
       </div>
 
-      <!-- 步驟 3: 選擇形象 (貓或狗) -->
+      <!-- 步驟 4: 選擇形象 (貓或狗) -->
       <div id="menu-step-avatar" class="menu-step hidden">
-        <h2 class="step-heading">【步驟 3】請選擇您的代表形象</h2>
+        <h2 class="step-heading">【步驟 4】請選擇您的代表形象</h2>
         <div class="avatar-select-grid">
           <div id="btn-choose-cat" class="avatar-card card-cat selected">
             <div class="avatar-emoji">🐱</div>
@@ -148,16 +222,19 @@
           </div>
         </div>
 
-        <button id="btn-start-game" class="btn-action btn-start pulse">🚀 正式進入戰局（開始5分鐘對決）</button>
+        <div class="step-actions" style="margin-top: 24px; display: flex; justify-content: center; gap: 14px;">
+          <button id="btn-avatar-back" class="btn-action btn-copy">⬅ 上一步</button>
+          <button id="btn-start-game" class="btn-action btn-start pulse">🚀 正式進入戰局（開始5分鐘對決）</button>
+        </div>
       </div>
 
       <div class="menu-rules-summary">
-        <strong>📖 遊戲快速規則：</strong>
-        <span>1. 雙方自基地出發向四面八方擴張</span>・
-        <span>2. 點擊相鄰地盤回答常識題 (四選一)</span>・
-        <span>3. 答對佔領並獲取分數，答錯倒扣且該格進入冷卻</span>・
-        <span>4. 分數越高地盤越大題目越難</span>・
-        <span>5. 5分鐘後總分高者勝出！</span>
+        <strong>📖 遊戲核心玩法：</strong>
+        <span>1. 雙方自兩端基地向四方擴張</span>・
+        <span>2. 點擊相鄰方格回答趣味常識題 (四選一)</span>・
+        <span>3. 答對佔領地盤，答錯該格進入15秒冷卻</span>・
+        <span>4. 全場共有 50 塊均勻尺寸地盤</span>・
+        <span>5. 5 分鐘倒數結束，佔領地盤最多者獲勝！</span>
       </div>
     </div>
   </div>
@@ -175,14 +252,16 @@
             <span id="p1-status" class="player-status-tag hidden">🧊 冰凍中 10s</span>
           </div>
           <div class="hud-stats">
-            <span class="hud-pill pill-score">⭐ <span id="p1-score">0 分</span></span>
-            <span class="hud-pill pill-territory">🚩 <span id="p1-territory">0 塊</span></span>
+            <span class="hud-pill pill-territory">🚩 佔領地盤：<span id="p1-territory">0 / 48 塊 (0%)</span></span>
           </div>
         </div>
       </div>
 
-      <!-- 中間上方：5 分鐘計時器與行動標籤 -->
+      <!-- 中間上方：關卡標籤、5 分鐘計時器與行動引導 -->
       <div class="center-hud">
+        <div id="hud-stage-badge" class="hud-stage-badge">
+          👑 關卡：全能知識王擂台
+        </div>
         <div class="timer-box">
           <span class="timer-icon">⏱</span>
           <span id="hud-timer" class="timer-value">05:00</span>
@@ -203,8 +282,7 @@
             <span class="hud-name" id="p2-name">狗狗軍團</span>
           </div>
           <div class="hud-stats justify-end">
-            <span class="hud-pill pill-score">⭐ <span id="p2-score">0 分</span></span>
-            <span class="hud-pill pill-territory">🚩 <span id="p2-territory">0 塊</span></span>
+            <span class="hud-pill pill-territory">🚩 佔領地盤：<span id="p2-territory">0 / 48 塊 (0%)</span></span>
           </div>
         </div>
         <div class="hud-avatar" id="p2-avatar">🐶</div>
@@ -218,7 +296,7 @@
     <section class="tactical-item-dock" id="tactical-item-dock">
       <div class="dock-header">
         <span class="dock-title">🎒 戰術攻擊道具：</span>
-        <span class="dock-hint">（搶答黃金地盤或答對連勝可掉落道具！）</span>
+        <span class="dock-hint">（搶答黃金地盤或連勝答對可掉落道具！）</span>
       </div>
       <div class="dock-buttons">
         <button id="btn-item-freeze" class="btn-tactical item-freeze" title="點擊發動：冰凍對手 10 秒無法行動">
@@ -226,12 +304,12 @@
           <span class="item-name">定身術</span>
           <span class="item-count" id="count-freeze">x1</span>
         </button>
-        <button id="btn-item-bomb" class="btn-tactical item-bomb" title="點擊發動：轟炸對手最高分地盤重置為中立">
+        <button id="btn-item-bomb" class="btn-tactical item-bomb" title="點擊發動：轟炸對手地盤重置為中立">
           <span class="item-icon">💣</span>
           <span class="item-name">肉球轟炸</span>
           <span class="item-count" id="count-bomb">x1</span>
         </button>
-        <button id="btn-item-shield" class="btn-tactical item-shield" title="點擊發動：金鐘護盾 25 秒抵擋轟炸並免除答錯倒扣">
+        <button id="btn-item-shield" class="btn-tactical item-shield" title="點擊發動：金鐘護盾 25 秒抵擋轟炸並免除答錯冷卻">
           <span class="item-icon">🛡️</span>
           <span class="item-name">守護金盾</span>
           <span class="item-count" id="count-shield">x1</span>
@@ -239,18 +317,18 @@
       </div>
       <div class="dock-extra">
         <div id="hud-combo-badge" class="combo-pill hidden">🔥 2 連勝！</div>
-        <div id="hud-fever-badge" class="fever-pill hidden">⚡ 狂熱時間 +50% 分數！</div>
+        <div id="hud-fever-badge" class="fever-pill hidden">⚡ 狂熱衝刺中！</div>
       </div>
     </section>
 
-    <!-- 異構尺寸地盤棋盤 -->
+    <!-- 50 塊均勻尺寸地盤棋盤 (10 欄 x 5 列) -->
     <main class="board-container">
       <div id="game-board" class="board-grid"></div>
     </main>
 
     <!-- 底部操作提示 -->
     <footer class="game-footer">
-      <p class="footer-tip">🐾 <strong>玩法指引：</strong>綠色微光外框代表當前可進攻的相鄰地盤。答對得地得點，答錯倒扣分數！分數越高的格子面積越大！</p>
+      <p class="footer-tip">🐾 <strong>玩法指引：</strong>綠色微光外框代表當前可進攻的相鄰地盤。答對佔地，答錯該格冷卻。全場共 50 塊均勻地盤，5 分鐘倒數結束佔領最多者勝出！</p>
     </footer>
   </div>
 
@@ -306,7 +384,7 @@
     </div>
   </div>
 
-  <!-- 應用程式模組進入點 (加上快取破壞參數 ?v=2.7) -->
-  <script type="module" src="js/main.js?v=2.7"></script>
+  <!-- 應用程式模組進入點 (加上快取破壞參數 ?v=3.0) -->
+  <script type="module" src="js/main.js?v=3.0"></script>
 </body>
 </html>

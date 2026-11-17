@@ -1,240 +1,172 @@
 import { GAME_CONFIG } from '../config.js';
+import { CATEGORIES } from '../data/questions.js';
 import { Tile } from './Tile.js';
 
 /**
  * 棋盤管理器 (Board Entity)
- * 負責生成無縫拼接的異構尺寸地盤 (10~100分，面積大小嚴格對應)
- * 支援拓撲相鄰演算法與兩側隨機基地配置
+ * 負責生成 50 塊均勻尺寸地盤 (10 欄 x 5 列)
+ * 支援主題關卡題庫對應、四向拓撲相鄰演算法、黃金地盤與兩端基地配置
  */
 export class Board {
   constructor(containerElement) {
     this.container = containerElement;
-    this.cols = GAME_CONFIG.GRID_COLUMNS; // 12
-    this.rows = GAME_CONFIG.GRID_ROWS;    // 8
+    this.cols = GAME_CONFIG.GRID_COLUMNS; // 10
+    this.rows = GAME_CONFIG.GRID_ROWS;    // 5
+    this.totalTiles = GAME_CONFIG.TOTAL_TILES; // 50
     this.tiles = [];                      // Tile[]
     this.catBaseTile = null;
     this.dogBaseTile = null;
+    this.currentTheme = 'all';
   }
 
   /**
-   * 生成全新的異構棋盤
+   * 設定當前關卡主題
    */
-  generate() {
-    this.tiles = [];
-    const occupied = Array.from({ length: this.rows }, () => Array(this.cols).fill(false));
+  setTheme(themeId) {
+    this.currentTheme = themeId || 'all';
+  }
 
-    // 1. 隨機決定兩大基地位置 (確保相距兩端角落)
+  /**
+   * 生成 50 格均勻尺寸全新棋盤
+   */
+  generate(themeId = null) {
+    if (themeId) this.setTheme(themeId);
+    this.tiles = [];
+
+    // 兩端角落基地配置方案
     const baseCorners = [
-      { cat: { r: 0, c: 0 }, dog: { r: this.rows - 2, c: this.cols - 2 } },
-      { cat: { r: 0, c: this.cols - 2 }, dog: { r: this.rows - 2, c: 0 } },
-      { cat: { r: this.rows - 2, c: 0 }, dog: { r: 0, c: this.cols - 2 } },
-      { cat: { r: this.rows - 2, c: this.cols - 2 }, dog: { r: 0, c: 0 } },
+      { cat: { r: 0, c: 0 }, dog: { r: this.rows - 1, c: this.cols - 1 } },
+      { cat: { r: 0, c: this.cols - 1 }, dog: { r: this.rows - 1, c: 0 } },
+      { cat: { r: this.rows - 1, c: 0 }, dog: { r: 0, c: this.cols - 1 } },
+      { cat: { r: this.rows - 1, c: this.cols - 1 }, dog: { r: 0, c: 0 } },
     ];
     const chosenCorner = baseCorners[Math.floor(Math.random() * baseCorners.length)];
 
-    // 放置貓咪基地 (2x2)
-    this.catBaseTile = new Tile({
-      id: 'base_cat',
-      col: chosenCorner.cat.c,
-      row: chosenCorner.cat.r,
-      colSpan: 2,
-      rowSpan: 2,
-      isBase: true,
-      baseFaction: 'cat',
-    });
-    this.markOccupied(occupied, this.catBaseTile);
-    this.tiles.push(this.catBaseTile);
+    const allCatKeys = ['life', 'nature', 'world', 'anime', 'food'];
+    let tileIndexCounter = 1;
 
-    // 放置狗狗基地 (2x2)
-    this.dogBaseTile = new Tile({
-      id: 'base_dog',
-      col: chosenCorner.dog.c,
-      row: chosenCorner.dog.r,
-      colSpan: 2,
-      rowSpan: 2,
-      isBase: true,
-      baseFaction: 'dog',
-    });
-    this.markOccupied(occupied, this.dogBaseTile);
-    this.tiles.push(this.dogBaseTile);
-
-    // 2. 依序填入高等級大地盤 (100, 90, 80, 70, 60, 50, 40, 30, 20, 10)
-    // 較大面積配置：3x3 (100分), 3x2 / 2x3 (70~90分), 2x2 (50~60分), 2x1 / 1x2 (30~40分), 1x1 (10~20分)
-    const templates = [
-      { score: 100, colSpan: 3, rowSpan: 3, diff: 5 },
-      { score: 90,  colSpan: 3, rowSpan: 2, diff: 5 },
-      { score: 80,  colSpan: 2, rowSpan: 3, diff: 4 },
-      { score: 70,  colSpan: 3, rowSpan: 2, diff: 4 },
-      { score: 60,  colSpan: 2, rowSpan: 2, diff: 3 },
-      { score: 60,  colSpan: 2, rowSpan: 2, diff: 3 },
-      { score: 50,  colSpan: 2, rowSpan: 2, diff: 3 },
-      { score: 50,  colSpan: 2, rowSpan: 2, diff: 3 },
-      { score: 40,  colSpan: 2, rowSpan: 1, diff: 2 },
-      { score: 40,  colSpan: 1, rowSpan: 2, diff: 2 },
-      { score: 40,  colSpan: 2, rowSpan: 1, diff: 2 },
-      { score: 30,  colSpan: 2, rowSpan: 1, diff: 2 },
-      { score: 30,  colSpan: 1, rowSpan: 2, diff: 2 },
-      { score: 30,  colSpan: 2, rowSpan: 1, diff: 2 },
-    ];
-
-    let tileIdCounter = 1;
-
-    // 嘗試放置各大地盤
-    for (const t of templates) {
-      const pos = this.findFreeSpot(occupied, t.colSpan, t.rowSpan);
-      if (pos) {
-        const tile = new Tile({
-          id: `tile_${tileIdCounter++}`,
-          col: pos.c,
-          row: pos.r,
-          colSpan: t.colSpan,
-          rowSpan: t.rowSpan,
-          score: t.score,
-          difficulty: t.diff,
-        });
-        this.markOccupied(occupied, tile);
-        this.tiles.push(tile);
-      }
-    }
-
-    // 3. 掃描剩餘所有空白單元格，以 2x1, 1x2 或 1x1 完全鋪滿，保證零縫隙
     for (let r = 0; r < this.rows; r++) {
       for (let c = 0; c < this.cols; c++) {
-        if (!occupied[r][c]) {
-          // 嘗試湊 2x1 (30分)
-          if (c + 1 < this.cols && !occupied[r][c + 1]) {
-            const tile = new Tile({
-              id: `tile_${tileIdCounter++}`,
-              col: c,
-              row: r,
-              colSpan: 2,
-              rowSpan: 1,
-              score: 30,
-              difficulty: 2,
-            });
-            this.markOccupied(occupied, tile);
-            this.tiles.push(tile);
-          }
-          // 嘗試湊 1x2 (30分)
-          else if (r + 1 < this.rows && !occupied[r + 1][c]) {
-            const tile = new Tile({
-              id: `tile_${tileIdCounter++}`,
-              col: c,
-              row: r,
-              colSpan: 1,
-              rowSpan: 2,
-              score: 30,
-              difficulty: 2,
-            });
-            this.markOccupied(occupied, tile);
-            this.tiles.push(tile);
-          }
-          // 單格 1x1 (10 或 20 分)
-          else {
-            const score = Math.random() > 0.5 ? 20 : 10;
-            const tile = new Tile({
-              id: `tile_${tileIdCounter++}`,
-              col: c,
-              row: r,
-              colSpan: 1,
-              rowSpan: 1,
-              score: score,
-              difficulty: 1,
-            });
-            this.markOccupied(occupied, tile);
-            this.tiles.push(tile);
-          }
-        }
-      }
-    }
-  }
+        const isCatBase = (r === chosenCorner.cat.r && c === chosenCorner.cat.c);
+        const isDogBase = (r === chosenCorner.dog.r && c === chosenCorner.dog.c);
 
-  markOccupied(matrix, tile) {
-    for (let r = tile.row; r < tile.row + tile.rowSpan; r++) {
-      for (let c = tile.col; c < tile.col + tile.colSpan; c++) {
-        matrix[r][c] = true;
-      }
-    }
-  }
-
-  findFreeSpot(matrix, colSpan, rowSpan) {
-    const validSpots = [];
-    for (let r = 0; r <= this.rows - rowSpan; r++) {
-      for (let c = 0; c <= this.cols - colSpan; c++) {
-        let fits = true;
-        for (let dr = 0; dr < rowSpan; dr++) {
-          for (let dc = 0; dc < colSpan; dc++) {
-            if (matrix[r + dr][c + dc]) {
-              fits = false;
-              break;
-            }
+        if (isCatBase) {
+          this.catBaseTile = new Tile({
+            id: 'base_cat',
+            tileNumber: 1,
+            col: c,
+            row: r,
+            isBase: true,
+            baseFaction: 'cat',
+          });
+          this.tiles.push(this.catBaseTile);
+        } else if (isDogBase) {
+          this.dogBaseTile = new Tile({
+            id: 'base_dog',
+            tileNumber: 50,
+            col: c,
+            row: r,
+            isBase: true,
+            baseFaction: 'dog',
+          });
+          this.tiles.push(this.dogBaseTile);
+        } else {
+          // 普通地盤格子：決定所屬主題分類與難度
+          let assignedCat = this.currentTheme;
+          if (assignedCat === 'all' || !CATEGORIES[assignedCat]) {
+            // 綜合關卡：平均分佈五大領域
+            assignedCat = allCatKeys[(r * this.cols + c) % allCatKeys.length];
           }
-          if (!fits) break;
-        }
-        if (fits) {
-          validSpots.push({ r, c });
+
+          const catMeta = CATEGORIES[assignedCat] || CATEGORIES.life;
+          // 難度星級 1~5 均勻漸進配置
+          const diff = ((r + c) % 5) + 1;
+
+          const tile = new Tile({
+            id: `tile_${r}_${c}`,
+            tileNumber: ++tileIndexCounter,
+            col: c,
+            row: r,
+            difficulty: diff,
+            category: assignedCat,
+            categoryIcon: catMeta.icon,
+            categoryName: catMeta.name,
+            isBase: false,
+          });
+
+          this.tiles.push(tile);
         }
       }
     }
-    if (validSpots.length === 0) return null;
-    return validSpots[Math.floor(Math.random() * validSpots.length)];
   }
 
   /**
-   * 取得指定陣營當前掌控的所有網格座標 (含基地)
+   * 取得指定地盤的上下左右四向相鄰地盤
    */
-  getFactionControlledCells(factionId) {
-    const controlledCells = [];
-    const baseOwnerKey = `base_${factionId}`;
+  getAdjacentTiles(tile) {
+    const adjacent = [];
+    const deltas = [
+      { dr: -1, dc: 0 },
+      { dr: 1, dc: 0 },
+      { dr: 0, dc: -1 },
+      { dr: 0, dc: 1 },
+    ];
 
-    for (const tile of this.tiles) {
-      if (tile.owner === factionId || tile.owner === baseOwnerKey) {
-        controlledCells.push(...tile.getOccupiedCells());
+    for (const d of deltas) {
+      const nr = tile.row + d.dr;
+      const nc = tile.col + d.dc;
+      if (nr >= 0 && nr < this.rows && nc >= 0 && nc < this.cols) {
+        const found = this.tiles.find((t) => t.row === nr && t.col === nc);
+        if (found) adjacent.push(found);
       }
     }
-    return controlledCells;
+
+    return adjacent;
   }
 
   /**
-   * 取得指定陣營當前「所有可進攻」的地盤清單
-   * 規則：非基地、非自身已佔領、未處於冷卻、且與自身地盤相鄰
+   * 取得指定陣營當前可點擊進攻的所有相鄰合法地盤
+   * 條件：
+   * 1. 非基地 (isBase !== true)
+   * 2. 非己方已佔領之格子 (owner !== factionId)
+   * 3. 該陣營當前不在答錯冷卻中 (!isCoolingDown)
+   * 4. 拓撲相鄰於任一己方已佔地盤或基地
    */
   getSelectableTiles(factionId) {
-    const factionCells = this.getFactionControlledCells(factionId);
-    if (factionCells.length === 0) return [];
+    // 找出己方控制的所有單元格
+    const myOwnedTiles = this.tiles.filter(
+      (t) => t.owner === factionId || t.owner === `base_${factionId}`
+    );
 
-    return this.tiles.filter((tile) => {
-      // 1. 基地不可被佔領
-      if (tile.isBase) return false;
-      // 2. 不能是自己已經佔領的地盤
-      if (tile.owner === factionId) return false;
-      // 3. 該陣營是否處於答錯冷卻中
-      if (tile.isCoolingDown(factionId)) return false;
-      // 4. 若已被對手搶先點擊作答中，暫時鎖定不可重疊點擊
-      if (tile.contestedBy && tile.contestedBy !== factionId) return false;
-      // 5. 是否與自身地盤相鄰共邊
-      return tile.isAdjacentToCells(factionCells);
-    });
+    const myOccupiedCells = [];
+    for (const mot of myOwnedTiles) {
+      myOccupiedCells.push(...mot.getOccupiedCells());
+    }
+
+    const selectable = [];
+
+    for (const tile of this.tiles) {
+      // 基地不能被佔領
+      if (tile.isBase) continue;
+
+      // 已經是自己佔領的地盤不可重複點擊進攻
+      if (tile.owner === factionId) continue;
+
+      // 當前陣營若處於答錯冷卻中不可點擊
+      if (tile.isCoolingDown(factionId)) continue;
+
+      // 檢查是否與己方勢力範圍相鄰
+      if (tile.isAdjacentToCells(myOccupiedCells)) {
+        selectable.push(tile);
+      }
+    }
+
+    return selectable;
   }
 
   /**
-   * 隨機觸發「限時黃金急迫搶答」地盤
-   * 優先挑選中立或相鄰的非基地地盤
+   * 取得限時黃金地盤 (相容舊函式名)
    */
-  spawnGoldenFlash(durationSeconds = 20) {
-    this.clearGoldenFlash();
-
-    const candidates = this.tiles.filter((t) => !t.isBase);
-    if (candidates.length === 0) return null;
-
-    const neutrals = candidates.filter((t) => !t.owner);
-    const pool = neutrals.length > 0 ? neutrals : candidates;
-
-    const chosen = pool[Math.floor(Math.random() * pool.length)];
-    chosen.setGoldenFlash(durationSeconds);
-    return chosen;
-  }
-
   getGoldenTile() {
     return this.tiles.find((t) => t.isGoldenFlash) || null;
   }
@@ -243,75 +175,78 @@ export class Board {
     return this.getGoldenTile();
   }
 
-  clearGoldenFlash() {
-    this.tiles.forEach((t) => {
-      if (t.isGoldenFlash) t.clearGoldenFlash();
-    });
-  }
-
-  tickGoldenFlash() {
-    const goldenTile = this.getGoldenTile();
-    if (!goldenTile) return false;
-
-    goldenTile.goldenTimeLeft -= 1;
-    if (goldenTile.goldenTimeLeft <= 0) {
-      goldenTile.clearGoldenFlash();
-      return true; // 已過期解除
-    }
-    return false;
-  }
-
   /**
-   * 尋找指定對手陣營佔領的分數最高地盤（作為轟炸鎖定目標）
+   * 隨機激活用戶未佔領的中立或對手地盤為黃金急迫挑戰地盤
    */
-  getHighestOpponentTile(opponentFactionId) {
-    const opponentTiles = this.tiles.filter(
-      (t) => !t.isBase && t.owner === opponentFactionId
-    );
-    if (opponentTiles.length === 0) return null;
+  spawnGoldenFlash(seconds = 20) {
+    const candidates = this.tiles.filter((t) => !t.isBase && !t.isGoldenFlash);
+    if (candidates.length === 0) return null;
 
-    opponentTiles.sort((a, b) => b.score - a.score);
-    return opponentTiles[0];
+    const chosen = candidates[Math.floor(Math.random() * candidates.length)];
+    chosen.setGoldenFlash(seconds);
+    return chosen;
   }
 
   /**
-   * 匯出地盤結構清單 (供線上雙人同步棋盤佈局)
+   * 將地盤重置為無人佔領之中立狀態 (例如被轟炸)
+   */
+  neutralizeTile(tile) {
+    if (!tile || tile.isBase) return;
+    tile.owner = null;
+    tile.clearGoldenFlash();
+    tile.triggerBombExplosion();
+  }
+
+  /**
+   * 匯出整張棋盤狀態資料 (供 P2P 線上連線同步)
    */
   exportTiles() {
     return this.tiles.map((t) => ({
       id: t.id,
+      tileNumber: t.tileNumber,
       col: t.col,
       row: t.row,
       colSpan: t.colSpan,
       rowSpan: t.rowSpan,
-      score: t.score,
       difficulty: t.difficulty,
+      category: t.category,
+      categoryIcon: t.categoryIcon,
+      categoryName: t.categoryName,
       isBase: t.isBase,
       owner: t.owner,
+      baseFaction: t.isBase ? (t.owner === 'base_cat' ? 'cat' : 'dog') : null,
+      isGoldenFlash: t.isGoldenFlash,
+      goldenTimeLeft: t.goldenTimeLeft,
     }));
   }
 
   /**
-   * 匯入並還原地盤結構 (同步房主生成之棋盤)
+   * 匯入線上遠端棋盤結構 (訪客端接收房主資料同步)
    */
-  importTiles(tilesData) {
+  importTiles(exportedTiles) {
     this.tiles = [];
     this.catBaseTile = null;
     this.dogBaseTile = null;
 
-    tilesData.forEach((data) => {
+    for (const data of exportedTiles) {
       const tile = new Tile({
         id: data.id,
+        tileNumber: data.tileNumber,
         col: data.col,
         row: data.row,
         colSpan: data.colSpan,
         rowSpan: data.rowSpan,
-        score: data.score,
         difficulty: data.difficulty,
+        category: data.category,
+        categoryIcon: data.categoryIcon,
+        categoryName: data.categoryName,
         isBase: data.isBase,
-        baseFaction: data.owner && data.owner.startsWith('base_') ? data.owner.replace('base_', '') : null,
+        baseFaction: data.baseFaction,
       });
+
       tile.owner = data.owner;
+      tile.isGoldenFlash = data.isGoldenFlash;
+      tile.goldenTimeLeft = data.goldenTimeLeft;
 
       if (tile.isBase) {
         if (tile.owner === 'base_cat') this.catBaseTile = tile;
@@ -319,44 +254,6 @@ export class Board {
       }
 
       this.tiles.push(tile);
-    });
-  }
-
-  /**
-   * 炸毀指定地盤，重置為無主中立地盤並觸發爆破特效
-   */
-  neutralizeTile(tile) {
-    if (!tile || tile.isBase) return false;
-    tile.owner = null;
-    tile.triggerBombExplosion(1200);
-    return true;
-  }
-
-  /**
-   * 渲染整個棋盤至容器
-   */
-  render(currentTurnFactionId, onTileClick) {
-    if (!this.container) return;
-    this.container.innerHTML = '';
-
-    const selectableTiles = this.getSelectableTiles(currentTurnFactionId);
-    const selectableSet = new Set(selectableTiles.map((t) => t.id));
-
-    this.tiles.forEach((tile) => {
-      const btn = document.createElement('div');
-      btn.dataset.id = tile.id;
-      tile.element = btn;
-
-      const isSelectable = selectableSet.has(tile.id);
-      tile.render(isSelectable);
-
-      btn.addEventListener('click', () => {
-        if (isSelectable && onTileClick) {
-          onTileClick(tile);
-        }
-      });
-
-      this.container.appendChild(btn);
-    });
+    }
   }
 }

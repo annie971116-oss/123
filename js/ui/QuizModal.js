@@ -1,27 +1,33 @@
 import { GAME_CONFIG } from '../config.js';
+import { AudioSystem } from '../core/AudioSystem.js';
 
 /**
- * 常識問答彈窗管理器 (Quiz Modal UI)
- * 負責渲染四選一常識選擇題、倒數計時條與答對/答錯即時視覺回饋
+ * 常識問答彈窗控制器 (Quiz Modal)
+ * 負責渲染四選一趣味常識題目、20 秒倒數計時進度條、即時回饋與答題結果通知
  */
 export class QuizModal {
-  constructor(audioSystem) {
-    this.audio = audioSystem;
+  constructor({ onTimeUp = () => {} } = {}) {
+    this.onTimeUp = onTimeUp;
+    this.audio = new AudioSystem();
+
     this.modalEl = document.getElementById('quiz-modal');
     this.titleEl = document.getElementById('quiz-title');
     this.questionEl = document.getElementById('quiz-question');
     this.optionsContainer = document.getElementById('quiz-options');
-    this.timerBar = document.getElementById('quiz-timer-bar');
     this.feedbackEl = document.getElementById('quiz-feedback');
+    this.timerBar = document.getElementById('quiz-timer-bar');
 
     this.timer = null;
-    this.timeLeft = 20;
+    this.timeLeft = GAME_CONFIG.QUIZ_TIME_LIMIT;
     this.currentResolve = null;
     this.isAnswered = false;
   }
 
   /**
-   * 彈出題目並等待玩家作答
+   * 彈出題目並等待使用者作答
+   * @param {Object} question - 題目物件
+   * @param {Object} targetTile - 目標地盤
+   * @param {string} factionId - 作答玩家陣營 ('cat' | 'dog')
    * @returns {Promise<{ correct: boolean, targetTile: Object }>}
    */
   askQuestion(question, targetTile, factionId) {
@@ -30,10 +36,13 @@ export class QuizModal {
       this.isAnswered = false;
       this.timeLeft = GAME_CONFIG.QUIZ_TIME_LIMIT;
 
-      // 填入題目標題與地盤分數
-      const faction = GAME_CONFIG.FACTIONS[factionId];
-      const stars = '⭐'.repeat(targetTile.difficulty);
-      this.titleEl.innerHTML = `${faction.avatar} 【${faction.name}】正在搶奪 <strong>${targetTile.score} 分</strong> 地盤！ (${stars})`;
+      // 填入題目標題與地盤主題
+      const faction = GAME_CONFIG.FACTIONS[factionId] || GAME_CONFIG.FACTIONS.cat;
+      const stars = '⭐'.repeat(targetTile.difficulty || 1);
+      const catIcon = targetTile.categoryIcon || '🌿';
+      const catName = targetTile.categoryName || '趣味常識';
+
+      this.titleEl.innerHTML = `${faction.avatar} 【${faction.name}】搶奪【#${targetTile.tileNumber}】號地盤 (${catIcon} ${catName}・${stars})`;
       this.questionEl.textContent = question.question;
 
       this.feedbackEl.className = 'quiz-feedback hidden';
@@ -93,7 +102,7 @@ export class QuizModal {
     const isCorrect = !isTimeout && chosenIndex === question.answerIndex;
     const buttons = this.optionsContainer.querySelectorAll('.quiz-option-btn');
 
-    // 禁用所有按鈕
+    // 禁用所有按鈕並標記正誤
     buttons.forEach((btn, idx) => {
       btn.disabled = true;
       if (idx === question.answerIndex) {
@@ -110,20 +119,16 @@ export class QuizModal {
       this.feedbackEl.className = 'quiz-feedback success';
       this.feedbackEl.innerHTML = `
         <strong>🎉 太棒了！回答正確！</strong>
-        <p>成功佔領地盤！獲得 <strong>+${targetTile.score}</strong> 分！</p>
+        <p>成功佔領【#${targetTile.tileNumber}】號地盤！朝稱霸 50 格更進一步！</p>
       `;
     } else {
       this.audio.playWrong();
-      const penalty = Math.max(
-        GAME_CONFIG.MIN_WRONG_PENALTY,
-        Math.round(targetTile.score * GAME_CONFIG.WRONG_PENALTY_RATIO)
-      );
       this.feedbackEl.className = 'quiz-feedback failure';
       const reason = isTimeout ? '⏰ 作答時間到！' : '❌ 糟糕，答案選錯了！';
       this.feedbackEl.innerHTML = `
         <strong>${reason}</strong>
-        <p>倒扣 <strong>-${penalty}</strong> 分！該地盤暫時進入冷卻無法佔領！</p>
-        <p class="explanation">💡 常識解說：${question.explanation}</p>
+        <p>佔領失敗！該地盤進入 15 秒冷卻！</p>
+        <p class="explanation">💡 趣味常識：${question.explanation}</p>
       `;
     }
 
@@ -132,6 +137,7 @@ export class QuizModal {
       this.modalEl.classList.add('hidden');
       if (this.currentResolve) {
         this.currentResolve({ correct: isCorrect, targetTile });
+        this.currentResolve = null;
       }
     }, isCorrect ? 1300 : 2200);
   }

@@ -1,20 +1,20 @@
 import { GAME_CONFIG } from '../config.js';
 
 /**
- * 玩家陣營實體 (代表貓咪或狗狗玩家之分數、地盤、戰術道具與狀態)
+ * 玩家陣營實體 (代表貓咪或狗狗玩家之佔領地盤、戰術道具與狀態)
+ * 無分數制度，以 50 格地盤佔領數量作為唯一勝負判定標準
  */
 export class Player {
   constructor(factionId) {
     this.faction = GAME_CONFIG.FACTIONS[factionId];
     this.factionId = factionId; // 'cat' | 'dog'
-    this.score = 0;
     this.claimedTileIds = new Set();
 
     // 戰術互動道具欄 (開局各獲贈 1 枚道具，可即時發動攻擊/防禦)
     this.items = {
       freeze: 1, // ❄️ 貓狗定身術 (冰凍對手 10 秒)
-      bomb: 1,   // 💣 肉球/骨頭轟炸 (炸毀對手最高分地盤)
-      shield: 1, // 🛡️ 金鐘護盾 (防禦轟炸 & 免疫下一次答錯倒扣)
+      bomb: 1,   // 💣 肉球/骨頭轟炸 (炸毀對手相鄰地盤)
+      shield: 1, // 🛡️ 金鐘護盾 (防禦轟炸 & 免疫下一次答錯冷卻)
     };
 
     // 連勝計數
@@ -27,7 +27,6 @@ export class Player {
   }
 
   reset() {
-    this.score = 0;
     this.claimedTileIds.clear();
     this.items = { freeze: 1, bomb: 1, shield: 1 };
     this.combo = 0;
@@ -36,27 +35,14 @@ export class Player {
     this.feverUntil = 0;
   }
 
-  addScore(points) {
-    // 若處於狂熱時間 (Fever Time)，加分額外 +50%
-    const finalPoints = this.isFeverActive() ? Math.round(points * 1.5) : points;
-    this.score += finalPoints;
-    return finalPoints;
-  }
-
-  deductScore(points) {
-    this.score = Math.max(0, this.score - points);
-  }
-
   claimTile(tile) {
+    if (!tile || tile.isBase) return;
     this.claimedTileIds.add(tile.id);
-    return this.addScore(tile.score);
   }
 
   loseTile(tile) {
-    if (this.claimedTileIds.has(tile.id)) {
-      this.claimedTileIds.delete(tile.id);
-      this.deductScore(tile.score);
-    }
+    if (!tile) return;
+    this.claimedTileIds.delete(tile.id);
   }
 
   getTerritoryCount() {
@@ -106,24 +92,8 @@ export class Player {
     return Date.now() < this.shieldUntil;
   }
 
-  getShieldSecondsRemaining() {
-    if (!this.isShielded()) return 0;
-    return Math.ceil((this.shieldUntil - Date.now()) / 1000);
-  }
-
   consumeShield() {
     this.shieldUntil = 0;
-  }
-
-  // ================= 連勝機制 (Combo & Fever) =================
-
-  addCombo() {
-    this.combo += 1;
-    return this.combo;
-  }
-
-  resetCombo() {
-    this.combo = 0;
   }
 
   activateFever(seconds = 15) {
@@ -132,5 +102,14 @@ export class Player {
 
   isFeverActive() {
     return Date.now() < this.feverUntil;
+  }
+
+  addCombo() {
+    this.combo += 1;
+    return this.combo;
+  }
+
+  resetCombo() {
+    this.combo = 0;
   }
 }

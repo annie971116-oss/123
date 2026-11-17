@@ -221,6 +221,118 @@ body {
   border-radius: 10px;
 }
 
+/* ================= 關卡主題選擇卡片 ================= */
+.stage-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.stage-card {
+  background: #FFFDFE;
+  border: 3px solid #FFE4EE;
+  border-radius: 20px;
+  padding: 18px 14px;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  box-shadow: 0 4px 12px rgba(255, 107, 139, 0.08);
+}
+
+.stage-card:hover {
+  transform: translateY(-3px);
+  border-color: var(--cat-color);
+  box-shadow: 0 10px 22px rgba(255, 107, 139, 0.2);
+}
+
+.stage-card.selected {
+  background: linear-gradient(145deg, #FFF0F5 0%, #FFE6EF 100%);
+  border-color: var(--cat-color);
+  box-shadow: 0 0 0 3px rgba(255, 107, 139, 0.3), 0 12px 24px rgba(255, 107, 139, 0.25);
+  transform: scale(1.02);
+}
+
+.stage-icon {
+  font-size: 40px;
+  margin-bottom: 8px;
+}
+
+.stage-title {
+  font-family: 'Baloo 2', sans-serif;
+  font-size: 19px;
+  font-weight: 800;
+  color: var(--text-dark);
+  margin-bottom: 4px;
+}
+
+.stage-card.selected .stage-title {
+  color: var(--cat-color);
+}
+
+.stage-sub {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--cat-color);
+  margin-bottom: 6px;
+}
+
+.stage-desc {
+  font-size: 12px;
+  color: var(--text-muted);
+  line-height: 1.4;
+  margin: 0;
+  flex: 1;
+}
+
+.stage-badge {
+  margin-top: 10px;
+  font-size: 11px;
+  font-weight: 800;
+  padding: 3px 10px;
+  border-radius: 20px;
+  background: #F3E8F0;
+  color: #7A6070;
+}
+
+.stage-badge.highlight {
+  background: linear-gradient(135deg, #FFB800 0%, #FF8A00 100%);
+  color: #fff;
+  box-shadow: 0 3px 8px rgba(255, 138, 0, 0.3);
+}
+
+.room-stage-pill {
+  background: #FFF0F5;
+  border: 2px solid #FFA3B8;
+  color: #D6336C;
+  font-weight: 800;
+  font-size: 14px;
+  border-radius: 20px;
+  padding: 8px 16px;
+  margin-bottom: 14px;
+  display: inline-block;
+}
+
+.hud-stage-badge {
+  background: linear-gradient(135deg, #FFF4E5 0%, #FFE9CC 100%);
+  border: 2px solid #FFC078;
+  color: #D9480F;
+  font-family: 'Baloo 2', sans-serif;
+  font-weight: 800;
+  font-size: 13.5px;
+  border-radius: 20px;
+  padding: 4px 14px;
+  margin-bottom: 6px;
+  box-shadow: 0 3px 8px rgba(217, 72, 15, 0.15);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
 /* ================= 電腦難度強度選擇卡片 ================= */
 .ai-diff-grid {
   display: grid;
@@ -720,17 +832,17 @@ body {
 
 .board-grid {
   display: grid;
-  grid-template-columns: repeat(12, minmax(68px, 1fr));
-  grid-template-rows: repeat(8, 62px);
-  gap: 7px;
-  min-width: 860px;
+  grid-template-columns: repeat(10, minmax(78px, 1fr));
+  grid-template-rows: repeat(5, minmax(82px, 1fr));
+  gap: 8px;
+  min-width: 840px;
 }
 
 .board-tile {
   background: var(--neutral-tile);
-  border: 2px solid var(--neutral-border);
-  border-radius: 18px;
-  padding: 8px 10px;
+  border: 2.5px solid var(--neutral-border);
+  border-radius: 16px;
+  padding: 6px 8px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -744,21 +856,6 @@ body {
 .board-tile:hover {
   transform: translateY(-2px);
   box-shadow: 0 6px 14px rgba(0, 0, 0, 0.08);
-}
-
-/* 面積等級階梯樣式 */
-.tile-tier-huge {
-  background: linear-gradient(135deg, #FFF9EA 0%, #FFF3D6 100%);
-  border: 3px solid #FFD272;
-}
-.tile-tier-huge .tile-score {
-  font-size: 22px;
-  color: #D47B00;
-}
-
-.tile-tier-large {
-  background: linear-gradient(135deg, #FFFDF6 0%, #FFF7E8 100%);
-  border: 2.5px solid #FFE1A8;
 }
 
 /* 基地守護區 */
@@ -777,10 +874,19 @@ body {
   border: 3px solid var(--dog-border);
 }
 
+.base-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  text-align: center;
+}
+
 .base-badge {
   font-family: 'Baloo 2', sans-serif;
   font-weight: 800;
-  font-size: 18px;
+  font-size: 13.5px;
   margin-bottom: 2px;
 }
 
@@ -788,7 +894,7 @@ body {
 .base-dog .base-badge { color: var(--dog-color); }
 
 .base-sub {
-  font-size: 11px;
+  font-size: 9.5px;
   font-weight: 700;
   color: var(--text-muted);
 }
@@ -799,14 +905,12 @@ body {
   border-color: var(--cat-border);
   box-shadow: inset 0 0 0 2px rgba(255, 107, 139, 0.25), 0 4px 10px var(--cat-shadow);
 }
-.board-tile.owned-cat .tile-score { color: var(--cat-color); }
 
 .board-tile.owned-dog {
   background: linear-gradient(145deg, #F0F7FF 0%, #E0EFFF 100%);
   border-color: var(--dog-border);
   box-shadow: inset 0 0 0 2px rgba(58, 150, 255, 0.25), 0 4px 10px var(--dog-shadow);
 }
-.board-tile.owned-dog .tile-score { color: var(--dog-color); }
 
 /* 可選進攻高亮引導 */
 .board-tile.tile-selectable {
@@ -833,15 +937,22 @@ body {
   align-items: center;
 }
 
-.tile-score {
+.tile-number {
   font-family: 'Baloo 2', sans-serif;
-  font-size: 17px;
+  font-size: 13.5px;
   font-weight: 800;
-  color: #6C5468;
+  color: #7D6173;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.tile-cat-icon {
+  font-size: 13px;
 }
 
 .tile-diff {
-  font-size: 11px;
+  font-size: 10px;
   letter-spacing: -2px;
 }
 
@@ -856,14 +967,14 @@ body {
 .owner-avatar {
   font-family: 'Baloo 2', sans-serif;
   font-weight: 800;
-  font-size: 13.5px;
+  font-size: 13px;
 }
 
 .owned-cat .owner-avatar { color: var(--cat-color); }
 .owned-dog .owner-avatar { color: var(--dog-color); }
 
 .neutral-flag {
-  font-size: 11.5px;
+  font-size: 11px;
   font-weight: 700;
   color: #A4909C;
 }
@@ -1414,7 +1525,7 @@ body {
 
 /* 響應式優化 */
 @media (max-width: 768px) {
-  .mode-cards-grid, .avatar-select-grid, .ai-diff-grid {
+  .mode-cards-grid, .avatar-select-grid, .ai-diff-grid, .stage-cards-grid {
     grid-template-columns: 1fr;
   }
   .game-hud {

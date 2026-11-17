@@ -3,7 +3,7 @@ import { GAME_CONFIG } from '../config.js';
 /**
  * 電腦 AI 決策系統 (AI System)
  * 支援三段強度：🟢 呆萌幼幼 (簡單) / 🟡 活潑寵物 (普通) / 🔴 戰神霸王 (困難)
- * 具備限時搶奪格優先鎖定、冰凍狀態暫停與戰術技能發動能力
+ * 純以 50 格地盤擴張、搶奪對手領地、黃金急迫挑戰與戰術技能施放為核心
  */
 export class AISystem {
   constructor(board, aiPlayer, onAIMove, aiDifficultyKey = 'normal', onAIUseItem = null) {
@@ -85,78 +85,73 @@ export class AISystem {
       return;
     }
 
-    // 🌟 優先判斷：若存在相鄰的「限時黃金寶藏地盤」，AI 高機率全力搶攻！
+    // 🌟 優先判斷：若存在相鄰的「限時黃金地盤」，AI 高機率全力搶攻！
     const goldenTarget = selectable.find((t) => t.isGoldenFlash);
     let targetTile = null;
 
     if (goldenTarget && Math.random() < (this.difficultyKey === 'easy' ? 0.5 : 0.9)) {
       targetTile = goldenTarget;
     } else {
-      // 智慧加權評估：
-      // - 基礎分 = 地盤分數
-      // - 侵略加權 = 若已被玩家佔領，增加掠奪意願
-      selectable.sort((a, b) => {
-        let weightA = a.score;
-        let weightB = b.score;
+      // 依侵略性優先搶奪玩家地盤或未佔領中立地盤
+      const playerTiles = selectable.filter(
+        (t) => t.owner && t.owner !== this.aiPlayer.factionId && !t.isBase
+      );
 
-        if (a.owner && !a.isBase) weightA += this.diffConfig.aggressiveScoreBias;
-        if (b.owner && !b.isBase) weightB += this.diffConfig.aggressiveScoreBias;
-
-        return weightB - weightA;
-      });
-
-      if (this.difficultyKey === 'easy') {
-        targetTile = selectable[Math.floor(Math.random() * selectable.length)];
-      } else if (this.difficultyKey === 'hard') {
-        const topCount = Math.min(2, selectable.length);
-        targetTile = selectable[Math.floor(Math.random() * topCount)];
+      if (playerTiles.length > 0 && Math.random() < this.diffConfig.stealAggression) {
+        targetTile = playerTiles[Math.floor(Math.random() * playerTiles.length)];
       } else {
-        const topCount = Math.min(3, selectable.length);
-        targetTile = selectable[Math.floor(Math.random() * topCount)];
+        targetTile = selectable[Math.floor(Math.random() * selectable.length)];
       }
     }
 
-    // 計算 AI 答對機率 (依據強度與題目難度對照表)
-    const accuracy = this.diffConfig.accuracyByDiff[targetTile.difficulty] || 0.65;
+    if (!targetTile) {
+      this.scheduleNextAction();
+      return;
+    }
+
+    // 3. 依據題目難度判定 AI 是否答對
+    const accuracy = this.diffConfig.accuracyByDiff[targetTile.difficulty] || 0.7;
     const isCorrect = Math.random() < accuracy;
 
-    // 回呼通知主控台處理 AI 戰果
+    // 觸發行動回呼
     this.onAIMove(targetTile, isCorrect);
 
-    // 預約下一次進攻
+    // 安排下一次行動
     this.scheduleNextAction();
   }
 
   /**
-   * AI 戰術技能評估 (冰凍、炸彈)
+   * AI 評估是否使用戰術道具 (定身術、轟炸、護盾)
    */
   evaluateItemUsage() {
     if (!this.onAIUseItem) return;
 
-    // 根據難度決定發動機率
-    let chance = 0.15;
-    if (this.difficultyKey === 'hard') chance = 0.35;
-    else if (this.difficultyKey === 'easy') chance = 0.05;
+    // 1. 冰凍定身術：若擁有道具且有 40% 機率發動
+    if (this.aiPlayer.hasItem('freeze') && Math.random() < 0.4) {
+      this.aiPlayer.useItem('freeze');
+      this.onAIUseItem('freeze');
+      return;
+    }
 
-    if (Math.random() > chance) return;
-
-    // 優先使用炸彈（若玩家有佔領高分地盤）
-    if (this.aiPlayer.hasItem('bomb')) {
-      const humanFactionId = this.aiPlayer.factionId === 'cat' ? 'dog' : 'cat';
-      const targetOpponentTile = this.board.getHighestOpponentTile(humanFactionId);
-      if (targetOpponentTile && targetOpponentTile.score >= 30) {
-        if (this.aiPlayer.useItem('bomb')) {
-          this.onAIUseItem('bomb', targetOpponentTile);
-          return;
-        }
+    // 2. 轟炸：若擁有道具且對手已佔領地盤，轟炸其 1 塊相鄰地盤
+    if (this.aiPlayer.hasItem('bomb') && Math.random() < 0.35) {
+      const opponentFaction = this.aiPlayer.factionId === 'cat' ? 'dog' : 'cat';
+      const opponentTiles = this.board.tiles.filter(
+        (t) => t.owner === opponentFaction && !t.isBase
+      );
+      if (opponentTiles.length > 0) {
+        const target = opponentTiles[Math.floor(Math.random() * opponentTiles.length)];
+        this.aiPlayer.useItem('bomb');
+        this.onAIUseItem('bomb', target);
+        return;
       }
     }
 
-    // 其次使用冰凍術
-    if (this.aiPlayer.hasItem('freeze')) {
-      if (this.aiPlayer.useItem('freeze')) {
-        this.onAIUseItem('freeze', null);
-      }
+    // 3. 金鐘護盾：若未開啟護盾且擁有道具，30% 機率開啟
+    if (this.aiPlayer.hasItem('shield') && !this.aiPlayer.isShielded() && Math.random() < 0.3) {
+      this.aiPlayer.useItem('shield');
+      this.onAIUseItem('shield');
+      return;
     }
   }
 }
