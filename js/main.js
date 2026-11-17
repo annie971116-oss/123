@@ -1,14 +1,14 @@
-import { GAME_CONFIG } from './config.js?v=3.0';
-import { questionManager } from './data/questions.js?v=3.0';
-import { AudioSystem } from './core/AudioSystem.js?v=3.0';
-import { GameLoop } from './core/GameLoop.js?v=3.0';
-import { RoomManager } from './systems/RoomManager.js?v=3.0';
-import { AISystem } from './systems/AISystem.js?v=3.0';
-import { Player } from './entities/Player.js?v=3.0';
-import { Board } from './entities/Board.js?v=3.0';
-import { HUD } from './ui/HUD.js?v=3.0';
-import { QuizModal } from './ui/QuizModal.js?v=3.0';
-import { Menu } from './ui/Menu.js?v=3.0';
+import { GAME_CONFIG } from './config.js?v=4.0';
+import { questionManager } from './data/questions.js?v=4.0';
+import { AudioSystem } from './core/AudioSystem.js?v=4.0';
+import { GameLoop } from './core/GameLoop.js?v=4.0';
+import { RoomManager } from './systems/RoomManager.js?v=4.0';
+import { AISystem } from './systems/AISystem.js?v=4.0';
+import { Player } from './entities/Player.js?v=4.0';
+import { Board } from './entities/Board.js?v=4.0';
+import { HUD } from './ui/HUD.js?v=4.0';
+import { QuizModal } from './ui/QuizModal.js?v=4.0';
+import { Menu } from './ui/Menu.js?v=4.0';
 
 /**
  * 貓狗大戰：常識地盤爭奪戰 - 主控制器 (Main Application Controller)

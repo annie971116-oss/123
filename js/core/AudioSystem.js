@@ -350,6 +350,54 @@ export class AudioSystem {
     });
   }
 
+  /** 倒數 3-2-1 逼逼提示音 */
+  playCountdown() {
+    this.init();
+    this.resume();
+    if (!this.ctx) return;
+
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(650, this.ctx.currentTime);
+
+    gain.gain.setValueAtTime(0.35, this.ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.15);
+
+    osc.connect(gain);
+    gain.connect(this.sfxGain);
+
+    osc.start();
+    osc.stop(this.ctx.currentTime + 0.15);
+  }
+
+  /** 戰鬥開始開火哨音/喇叭音 */
+  playStart() {
+    this.init();
+    this.resume();
+    if (!this.ctx) return;
+
+    const notes = [523.25, 659.25, 783.99, 1046.5];
+    notes.forEach((freq, idx) => {
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      const t = this.ctx.currentTime + idx * 0.08;
+
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(freq, t);
+
+      gain.gain.setValueAtTime(0.4, t);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.35);
+
+      osc.connect(gain);
+      gain.connect(this.sfxGain);
+
+      osc.start(t);
+      osc.stop(t + 0.38);
+    });
+  }
+
   // ================= 可愛背景音樂 (BGM) =================
 
   startBGM() {
